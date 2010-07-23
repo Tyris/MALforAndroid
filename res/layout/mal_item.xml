@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="fill_parent"
+android:layout_height="fill_parent"
+android:padding="10dp"
+android:textSize="16sp" >
+
+	<TextView
+	android:id="@+id/complete"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="Completed: 10/10"
+	android:layout_below="@+id/title"
+	android:layout_alignLeft="@+id/title"/>
+		
+	<TextView
+	android:id="@+id/score"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="Score: 10"
+	android:layout_below="@+id/title"
+	android:layout_alignRight="@+id/title"/>
+	
+	<TextView
+	android:id="@+id/title"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+	android:text="Neon Genesis Evangelion: The End of Evangelion"
+	android:textSize="16sp"
+	android:layout_alignParentTop="true"
+	android:layout_alignParentLeft="true"/>
+
+</RelativeLayout>
+
+

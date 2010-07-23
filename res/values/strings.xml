@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="hello">Hello World, main!</string>
+    <string name="app_name">MAL for Android</string>
+    <string name="anime_table_def">
+CREATE TABLE if not exists `animeList` (
+  `id` INTEGER UNSIGNED NOT NULL,
+  `title` CHAR(40) NOT NULL,
+  `type` CHAR(40) NOT NULL,
+  `imageUrl` CHAR(40) NOT NULL,
+  `episodes` INTEGER UNSIGNED NOT NULL,
+  `status` CHAR(40) NOT NULL,
+  `watchedEpisodes` INTEGER UNSIGNED NOT NULL,
+  `score` INTEGER UNSIGNED NOT NULL,
+  `watchedStatus` CHAR(40) NOT NULL,
+  PRIMARY KEY (`id`)
+)
+    </string>
+</resources>
