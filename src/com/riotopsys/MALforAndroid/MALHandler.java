@@ -1,23 +1,23 @@
 package com.riotopsys.MALforAndroid;
 
-import java.util.LinkedList;
-
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import android.database.sqlite.SQLiteDatabase;
 import android.text.Html;
+import android.util.Log;
 
 public class MALHandler extends DefaultHandler {
 
 	private StringBuffer sb;
-	private LinkedList<AnimeRecord> list;
 	private AnimeRecord currentAnime;
+	SQLiteDatabase db;
 
-	MALHandler(  ) {
+	MALHandler(SQLiteDatabase db  ) {
 		
 		sb = new StringBuffer();
-		list = new LinkedList<AnimeRecord>();
+		this.db = db;
 		
 	}
 	
@@ -42,8 +42,14 @@ public class MALHandler extends DefaultHandler {
 		if (localName != null) {
 	
 			if (localName.equals("anime")) {
-				list.add(currentAnime);
-				currentAnime = null;				
+				@SuppressWarnings("unused")
+				String bob = currentAnime.replaceStatement();
+				
+				db.execSQL(currentAnime.replaceStatement());
+				Log.e("MALHandler:endElement", "Added: "+ currentAnime.title);
+				currentAnime = null;
+				
+				
 			} else if (localName.equals("id")) {
 				currentAnime.id = Integer.parseInt(s);
 			} else if (localName.equals("title")) {
@@ -70,16 +76,11 @@ public class MALHandler extends DefaultHandler {
 	@Override
 	public void startDocument() throws SAXException {
 		super.startDocument();
-		list.clear();		
 	}
 
 	@Override
 	public void endDocument() throws SAXException {
 		super.endDocument();		
 	}
-
-	public LinkedList<AnimeRecord> getList() {
-		return list;
-	}
-
+	
 }

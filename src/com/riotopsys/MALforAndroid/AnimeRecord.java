@@ -11,6 +11,22 @@ public class AnimeRecord {
 	public int watchedEpisodes;
 	public int score;
 	public String watchedStatus;
-
+	
+	public String replaceStatement(){
+		return "replace into `animeList` values ("+
+			String.valueOf( id ) + ", "+
+			addQuotes(title) + ", "+
+			addQuotes(type) + ", "+
+			addQuotes(imageUrl) + ", "+
+			String.valueOf( episodes ) + ", "+
+			addQuotes(status) + ", "+
+			String.valueOf( watchedEpisodes ) + ", "+
+			String.valueOf( score ) + ", "+
+			addQuotes(watchedStatus) +	", 0);";
+	}
+	
+	private String addQuotes( String s){
+		return "\"" + s + "\""; 		
+	}
 	
 }

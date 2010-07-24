@@ -4,12 +4,19 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     >
-<TextView
+<!--TextView
 	android:id="@+id/tv"  
     android:layout_width="fill_parent" 
     android:layout_height="wrap_content" 
     android:text="@string/hello"
+    -->
+    <Spinner 
+        android:id="@+id/spinner"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:prompt="@string/filter"
     />
+    
 <ListView
 	android:id="@+id/lv"  
     android:layout_width="fill_parent" 

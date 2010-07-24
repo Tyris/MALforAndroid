@@ -5,32 +5,64 @@ android:layout_width="fill_parent"
 android:layout_height="fill_parent"
 android:padding="10dp"
 android:textSize="16sp" >
-
+	
+	<TextView
+	android:id="@+id/title"
+	style="@android:style/TextAppearance.Medium"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+	android:text="Neon Genesis Evangelion: The End of Evangelion"	
+	android:layout_alignParentTop="true"
+	android:layout_alignParentLeft="true"/>
+	
+	<TextView
+	android:id="@+id/completetxt"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="Completed: "
+	android:layout_below="@+id/title"
+	android:layout_alignLeft ="@+id/title"/>
+	
 	<TextView
 	android:id="@+id/complete"
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
-	android:text="Completed: 10/10"
+	android:text="10"
 	android:layout_below="@+id/title"
-	android:layout_alignLeft="@+id/title"/>
-		
+	android:layout_toRightOf="@+id/completetxt"/>
+	
+	<TextView
+	android:id="@+id/completeSlash"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="/"
+	android:layout_below="@+id/title"
+	android:layout_toRightOf="@+id/complete"/>
+	
+	<TextView
+	android:id="@+id/total"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="10"
+	android:layout_below="@+id/title"
+	android:layout_toRightOf="@+id/completeSlash"/>
+	
 	<TextView
 	android:id="@+id/score"
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
-	android:text="Score: 10"
+	android:text="10"
 	android:layout_below="@+id/title"
 	android:layout_alignRight="@+id/title"/>
 	
 	<TextView
-	android:id="@+id/title"
-	android:layout_width="fill_parent"
+	android:id="@+id/scoretxt"
+	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
-	android:text="Neon Genesis Evangelion: The End of Evangelion"
-	android:textSize="16sp"
-	android:layout_alignParentTop="true"
-	android:layout_alignParentLeft="true"/>
-
+	android:text="Score: "
+	android:layout_below="@+id/title"
+	android:layout_toLeftOf="@+id/score"/>
+	
 </RelativeLayout>
 
 

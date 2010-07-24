@@ -2,6 +2,10 @@
 <resources>
     <string name="hello">Hello World, main!</string>
     <string name="app_name">MAL for Android</string>
+    
+    <string name="menuSort">Sort</string>
+    <string name="menuSettings">Settings</string>
+    
     <string name="anime_table_def">
 CREATE TABLE if not exists `animeList` (
   `id` INTEGER UNSIGNED NOT NULL,
@@ -13,7 +17,58 @@ CREATE TABLE if not exists `animeList` (
   `watchedEpisodes` INTEGER UNSIGNED NOT NULL,
   `score` INTEGER UNSIGNED NOT NULL,
   `watchedStatus` CHAR(40) NOT NULL,
+  `dirty` INTEGER UNSIGNED NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`)
 )
     </string>
+	
+	<string name="cursorSelect">
+    	select id as `_id`, title, watchedEpisodes, episodes, score from `animeList`
+    </string>
+    
+    <string name="filter">Filter settings</string>
+    
+    <string-array name="filterArray">
+        <item>All Anime</item>
+        <item>Watching</item>
+        <item>Completed</item>
+        <item>On Hold</item>
+        <item>Dropped</item>
+        <item>Plan to Watch</item>        
+    </string-array>
+    
+    <string-array name="filterPerfs">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>        
+    </string-array>
+    
+    <string-array name="sortArray">
+    	<item>Title</item>
+		<item>Completed</item>
+    	<item>Score</item>
+    </string-array>
+    
+    <string-array name="filterWhere">
+        <item></item>
+        <item>where watchedStatus = \"watching\"</item>
+        <item>where watchedStatus = \"completed\"</item>
+        <item>where watchedStatus = \"on-hold\"</item>
+        <item>where watchedStatus = \"dropped\"</item>
+        <item>where watchedStatus = \"plan to watch\"</item>        
+    </string-array>
+    
+    <string name="titleSort"> order by title </string>
+    <string name="completeSort"> order by watchedEpisodes desc </string>
+    <string name="scoreSort"> order by score desc </string>
+    
+    <string-array name="sortPerfs">    
+    	<item> order by title </item>
+    	<item> order by watchedEpisodes desc </item>
+    	<item> order by score desc </item>
+    </string-array>
+    	
 </resources>

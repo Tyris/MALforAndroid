@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+	
+	<item android:title="@string/menuSort" android:icon="@android:drawable/ic_menu_sort_by_size" android:id="@+id/menuSort">
+		<menu>
+    		<group android:checkableBehavior="none">
+        		<item android:id="@+id/sortTitle"
+              	android:title="Title" />
+        		<item android:id="@+id/sortComplete"
+              	android:title="Completed" />
+              	<item android:id="@+id/sortScore"
+              	android:title="Score" />
+    		</group>
+		</menu>
+	</item>
+	<item android:title="@string/menuSettings" android:icon="@android:drawable/ic_menu_preferences" android:id="@+id/menuSettings" ></item>
+
+</menu>
