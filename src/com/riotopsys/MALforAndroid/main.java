@@ -30,6 +30,7 @@ public class main extends Activity {
 	private SimpleCursorAdapter adapter;
 	private String sort;
 	private int lastChoice;
+	private Reciever rec;
 
 	// private MALAdapter adapter;
 
@@ -71,19 +72,11 @@ public class main extends Activity {
 		spinner.setOnItemSelectedListener(new FilterSelected());
 		
 		IntentFilter intentFilter = new IntentFilter("com.riotopsys.MALForAndroid.SYNC_COMPLETE");
-		registerReceiver(new BroadcastReceiver(){
+		
+		rec = new Reciever();
+		
+		registerReceiver(rec, intentFilter);
 
-			@Override
-			public void onReceive(Context arg0, Intent arg1) {
-				setFilter(lastChoice);				
-			}
-			
-		}, intentFilter);
-			
-
-		/*Intent i = new Intent(this, MALManager.class);
-		i.setAction(Intent.ACTION_SYNC);
-		startService(i);*/
 	}
 
 	@Override
@@ -92,6 +85,13 @@ public class main extends Activity {
 		inflater.inflate(R.menu.menu, menu);
 		return true;
 	}
+	
+	@Override 
+	public void onPause(){
+		unregisterReceiver( rec );
+		super.onPause();
+	}
+	
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
@@ -155,6 +155,15 @@ public class main extends Activity {
 		@Override
 		public void onNothingSelected(AdapterView<?> arg0) {
 		}
+	}
+	
+	private class Reciever extends BroadcastReceiver{
+
+		@Override
+		public void onReceive(Context arg0, Intent arg1) {
+			setFilter(lastChoice);				
+		}
+		
 	}
 
 }

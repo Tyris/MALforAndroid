@@ -12,10 +12,16 @@
             </intent-filter>
         </activity>
 
-    <service android:name="MALManager"></service>
-<activity android:name="Preferences"></activity>
-</application>
+    	<service android:name="MALManager" android:process="@string/processId"></service>
+		<activity android:name="Preferences"></activity>
+		<receiver android:name="BootStrap">
+			<intent-filter>
+				<action
+				android:name="android.intent.action.BOOT_COMPLETED" />
+				<category android:name="android.intent.category.HOME" />
+			</intent-filter>		
+		</receiver>
+	</application>
     <uses-sdk android:minSdkVersion="7" />
-
-<uses-permission android:name="android.permission.INTERNET"></uses-permission>
+	<uses-permission android:name="android.permission.INTERNET"></uses-permission>
 </manifest> 
