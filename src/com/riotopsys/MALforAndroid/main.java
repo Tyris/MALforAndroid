@@ -1,7 +1,10 @@
 package com.riotopsys.MALforAndroid;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.database.Cursor;
@@ -61,15 +64,26 @@ public class main extends Activity {
 			PreferenceManager.setDefaultValues(this, R.xml.preferances, false);
 			SharedPreferences perfs = PreferenceManager.getDefaultSharedPreferences(this);
 
-			sort = getString(R.string.titleSort);
+			sort =perfs.getString("sort", getString(R.string.titleSort)); 
 			spinner.setSelection(Integer.valueOf(perfs.getString("filter", "0")));
 		}
 
 		spinner.setOnItemSelectedListener(new FilterSelected());
+		
+		IntentFilter intentFilter = new IntentFilter("com.riotopsys.MALForAndroid.SYNC_COMPLETE");
+		registerReceiver(new BroadcastReceiver(){
 
-		Intent i = new Intent(this, MALManager.class);
+			@Override
+			public void onReceive(Context arg0, Intent arg1) {
+				setFilter(lastChoice);				
+			}
+			
+		}, intentFilter);
+			
+
+		/*Intent i = new Intent(this, MALManager.class);
 		i.setAction(Intent.ACTION_SYNC);
-		//startService(i);
+		startService(i);*/
 	}
 
 	@Override
@@ -82,6 +96,7 @@ public class main extends Activity {
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		int id = item.getItemId();
+		Intent i;
 		switch (id) {
 			case R.id.sortTitle:
 				sort = getString(R.string.titleSort);
@@ -95,9 +110,15 @@ public class main extends Activity {
 				sort = getString(R.string.completeSort);
 				setFilter(lastChoice);
 				break;
+			case R.id.menuSync:
+				i = new Intent(this, MALManager.class);
+				i.setAction(Intent.ACTION_SYNC);
+				startService(i);
+				break;
 			case R.id.menuSettings:
-				Intent i = new Intent(this, Preferences.class);
+				i = new Intent(this, Preferences.class);
 				startActivity(i);
+				break;
 		}
 		return true;
 	}

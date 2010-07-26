@@ -5,6 +5,7 @@
     
     <string name="menuSort">Sort</string>
     <string name="menuSettings">Settings</string>
+    <string name="menuSync">Sync Now</string>
     
     <string name="anime_table_def">
 CREATE TABLE if not exists `animeList` (

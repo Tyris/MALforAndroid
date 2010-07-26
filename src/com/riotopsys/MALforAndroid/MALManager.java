@@ -41,8 +41,12 @@ public class MALManager extends IntentService {
 
 			SAXParserFactory factory = SAXParserFactory.newInstance();
 			SAXParser parser = factory.newSAXParser();
-			MALHandler handeler = new MALHandler(db);
+			MALHandler handeler = new MALHandler(db );
 			parser.parse(in, handeler);
+			
+			Intent i = new Intent("com.riotopsys.MALForAndroid.SYNC_COMPLETE");
+			sendBroadcast(i);
+			
 		} catch (Exception e) {
 			Log.e("MALManager", "Failed to pull: "+e.toString());
 			Log.e("MALManager", Log.getStackTraceString(e) );

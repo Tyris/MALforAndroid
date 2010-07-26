@@ -6,7 +6,6 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import android.database.sqlite.SQLiteDatabase;
 import android.text.Html;
-import android.util.Log;
 
 public class MALHandler extends DefaultHandler {
 
@@ -14,17 +13,16 @@ public class MALHandler extends DefaultHandler {
 	private AnimeRecord currentAnime;
 	SQLiteDatabase db;
 
-	MALHandler(SQLiteDatabase db  ) {
-		
+	MALHandler(SQLiteDatabase db) {
 		sb = new StringBuffer();
 		this.db = db;
-		
+
 	}
-	
+
 	@Override
 	public void characters(char[] ch, int start, int length) throws SAXException {
 		super.characters(ch, start, length);
-				sb.append(new String(ch, start, length));		
+		sb.append(new String(ch, start, length));
 	}
 
 	@Override
@@ -38,18 +36,19 @@ public class MALHandler extends DefaultHandler {
 	@Override
 	public void endElement(String uri, String localName, String name) throws SAXException {
 		super.endElement(uri, localName, name);
-		String s = sb.toString().trim();		
+		String s = sb.toString().trim();
 		if (localName != null) {
-	
+
 			if (localName.equals("anime")) {
 				@SuppressWarnings("unused")
 				String bob = currentAnime.replaceStatement();
-				
+
 				db.execSQL(currentAnime.replaceStatement());
-				Log.e("MALHandler:endElement", "Added: "+ currentAnime.title);
+
+				// Log.e("MALHandler:endElement", "Added: "+
+				// currentAnime.title);
 				currentAnime = null;
-				
-				
+
 			} else if (localName.equals("id")) {
 				currentAnime.id = Integer.parseInt(s);
 			} else if (localName.equals("title")) {
@@ -67,7 +66,7 @@ public class MALHandler extends DefaultHandler {
 			} else if (localName.equals("score")) {
 				currentAnime.score = Integer.parseInt(s);
 			} else if (localName.equals("watched_status")) {
-				currentAnime.watchedStatus= Html.fromHtml(s).toString();
+				currentAnime.watchedStatus = Html.fromHtml(s).toString();
 			}
 			sb.delete(0, sb.length());
 		}
@@ -80,7 +79,7 @@ public class MALHandler extends DefaultHandler {
 
 	@Override
 	public void endDocument() throws SAXException {
-		super.endDocument();		
+		super.endDocument();
 	}
-	
+
 }

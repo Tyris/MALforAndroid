@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 	
-	<item android:title="@string/menuSort" android:icon="@android:drawable/ic_menu_sort_by_size" android:id="@+id/menuSort">
+	<item
+	android:title="@string/menuSort" 
+	android:icon="@android:drawable/ic_menu_sort_by_size" 
+	android:id="@+id/menuSort">
 		<menu>
     		<group android:checkableBehavior="none">
         		<item android:id="@+id/sortTitle"
@@ -13,6 +16,13 @@
     		</group>
 		</menu>
 	</item>
-	<item android:title="@string/menuSettings" android:icon="@android:drawable/ic_menu_preferences" android:id="@+id/menuSettings" ></item>
+	<item
+	android:title="@string/menuSync"
+	android:icon="@android:drawable/ic_menu_rotate"
+	android:id="@+id/menuSync" />
+	<item
+	android:title="@string/menuSettings"
+	android:icon="@android:drawable/ic_menu_preferences"
+	android:id="@+id/menuSettings" />
 
 </menu>
