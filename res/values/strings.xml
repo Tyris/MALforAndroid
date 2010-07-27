@@ -28,6 +28,14 @@ CREATE TABLE if not exists `animeList` (
     	select id as `_id`, title, watchedEpisodes, episodes, score from `animeList`
     </string>
     
+    <string name="dirty">
+    	update animeList set dirty = 1;
+    </string>
+    
+    <string name="clean">
+    	delete from animeList where dirty = 1;
+    </string>
+    
     <string name="filter">Filter settings</string>
     
     <string-array name="filterArray">
@@ -71,6 +79,18 @@ CREATE TABLE if not exists `animeList` (
     	<item> order by title </item>
     	<item> order by watchedEpisodes desc </item>
     	<item> order by score desc </item>
+    </string-array>
+    
+    <string-array name="updateFreqs">    
+    	<item>30 Min</item>
+    	<item>Hourly</item>
+    	<item>Daily</item>
+    </string-array>
+    
+    <string-array name="delays">
+        <item>1800000</item>
+        <item>3600000</item>
+        <item>86400000</item>
     </string-array>
     	
 </resources>

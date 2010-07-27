@@ -20,6 +20,9 @@
 <ListView
 	android:id="@+id/lv"  
     android:layout_width="fill_parent" 
-    android:layout_height="fill_parent"     
+    android:layout_height="fill_parent"  
+    android:fastScrollEnabled="true" 
+	android:scrollingCache="true" 
+	android:smoothScrollbar="true"   
     />
 </LinearLayout>

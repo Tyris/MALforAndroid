@@ -1,20 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 	
-	<ListPreference 
-	android:persistent="true" 
-	android:title="Default View" 
-	android:key="filter"
-	android:entryValues="@array/filterPerfs"
-	android:entries="@array/filterArray"
-	android:defaultValue="1"/>
+	<PreferenceCategory
+	android:title="Account Settings">
 	
-	<ListPreference 
-	android:persistent="true" 
-	android:title="Default Sorting" 
-	android:key="sort"
-	android:entryValues="@array/sortPerfs"
-	android:entries="@array/sortArray"
-	android:defaultValue="@string/titleSort"/>
+		<EditTextPreference
+		android:persistent="true" 
+		android:key="userName"
+		android:title="User"
+		android:summary="MAL Username"
+		android:dialogTitle="User name"
+		android:defaultValue=""/>
+		
+		<EditTextPreference
+		android:persistent="true" 
+		android:key="passwd"
+		android:title="Password"
+		android:summary="MAL Password"
+		android:dialogTitle="Password"
+		android:password="true" 
+		android:defaultValue="" />
+		
+		<EditTextPreference
+		android:persistent="true" 
+		android:key="api"
+		android:title="MAL API Site"
+		android:summary="Site of Unofficial MAL API Provider"
+		android:dialogTitle="MAL API Site"		
+		android:defaultValue="mal-api.com" />
+	
+	</PreferenceCategory>
+	
+	<PreferenceCategory
+	android:title="Presentation Options">
+	
+		<ListPreference 
+		android:persistent="true" 
+		android:title="Default View" 
+		android:key="filter"
+		android:entryValues="@array/filterPerfs"
+		android:entries="@array/filterArray"
+		android:defaultValue="1"/>
+	
+		<ListPreference 
+		android:persistent="true" 
+		android:title="Default Sorting" 
+		android:key="sort"
+		android:entryValues="@array/sortPerfs"
+		android:entries="@array/sortArray"
+		android:defaultValue="@string/titleSort"/>
+	</PreferenceCategory>
+	
+	<PreferenceCategory
+	android:title="List Update Options">
+		<ListPreference 
+		android:persistent="true" 
+		android:title="Update Frequency" 
+		android:key="updateFreq"
+		android:entryValues="@array/delays"
+		android:entries="@array/updateFreqs"
+		android:defaultValue="3600000"/>
+	</PreferenceCategory>
 
 </PreferenceScreen>

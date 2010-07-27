@@ -22,6 +22,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 public class main extends Activity {
 
@@ -31,6 +32,7 @@ public class main extends Activity {
 	private String sort;
 	private int lastChoice;
 	private Reciever rec;
+	private IntentFilter intentFilter;
 
 	// private MALAdapter adapter;
 
@@ -50,33 +52,40 @@ public class main extends Activity {
 		MALSqlHelper openHelper = new MALSqlHelper(this.getBaseContext());
 		db = openHelper.getReadableDatabase();
 
-		// Cursor c = db.rawQuery(getString(R.string.cursorSelect), null );
 
 		adapter = new SimpleCursorAdapter(this, R.layout.mal_item, null, new String[] { "title", "watchedEpisodes", "episodes", "score" }, new int[] {
 				R.id.title, R.id.complete, R.id.total, R.id.score });
 		lv.setAdapter(adapter);
-
-		// setFilter(0);
+		
+		PreferenceManager.setDefaultValues(this, R.xml.preferances, false);
+		SharedPreferences perfs = PreferenceManager.getDefaultSharedPreferences(this);
 
 		if (savedInstanceState != null) {
 			sort = savedInstanceState.getString("sort");
 			spinner.setSelection(savedInstanceState.getInt("filter"));
 		} else {
-			PreferenceManager.setDefaultValues(this, R.xml.preferances, false);
-			SharedPreferences perfs = PreferenceManager.getDefaultSharedPreferences(this);
-
 			sort =perfs.getString("sort", getString(R.string.titleSort)); 
 			spinner.setSelection(Integer.valueOf(perfs.getString("filter", "0")));
 		}
 
 		spinner.setOnItemSelectedListener(new FilterSelected());
 		
-		IntentFilter intentFilter = new IntentFilter("com.riotopsys.MALForAndroid.SYNC_COMPLETE");
+		intentFilter = new IntentFilter("com.riotopsys.MALForAndroid.SYNC_COMPLETE");
 		
 		rec = new Reciever();
 		
 		registerReceiver(rec, intentFilter);
-
+		
+		if ( perfs.getString("userName", "").equals("") || perfs.getString("api", "").equals("")  ){
+			Intent i = new Intent(this, Preferences.class);
+			startActivity(i);
+			if ( perfs.getString("userName", "").equals("") ){
+				Toast.makeText(this, "Please setup your account", Toast.LENGTH_LONG).show();
+			} else {
+				Toast.makeText(this, "Please setup MAL API", Toast.LENGTH_LONG).show();
+			}			
+		} 	
+		
 	}
 
 	@Override
@@ -89,6 +98,12 @@ public class main extends Activity {
 	@Override 
 	public void onPause(){
 		unregisterReceiver( rec );
+		super.onPause();
+	}
+	
+	@Override 
+	public void onResume(){
+		registerReceiver( rec, intentFilter );
 		super.onPause();
 	}
 	
