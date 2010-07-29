@@ -17,6 +17,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -69,6 +70,7 @@ public class main extends Activity {
 		}
 
 		spinner.setOnItemSelectedListener(new FilterSelected());
+		lv.setOnItemClickListener(new AnimeSelected(this.getBaseContext()));
 		
 		intentFilter = new IntentFilter("com.riotopsys.MALForAndroid.SYNC_COMPLETE");
 		
@@ -84,8 +86,7 @@ public class main extends Activity {
 			} else {
 				Toast.makeText(this, "Please setup MAL API", Toast.LENGTH_LONG).show();
 			}			
-		} 	
-		
+		} 			
 	}
 
 	@Override
@@ -170,6 +171,25 @@ public class main extends Activity {
 		@Override
 		public void onNothingSelected(AdapterView<?> arg0) {
 		}
+	}
+	
+	private class AnimeSelected implements OnItemClickListener {
+
+		private Context context;
+		
+		public AnimeSelected(Context context) {
+			this.context = context;
+		}
+
+		@Override
+		public void onItemClick(AdapterView<?> arg0, View arg1, int position, long id) {
+			Toast.makeText(context, "item: "+ String.valueOf(id), Toast.LENGTH_LONG).show();			
+			Intent i = new Intent( context, AnimeDetail.class );
+			i.putExtra("id", id);
+			startActivity(i);			
+			
+		}
+
 	}
 	
 	private class Reciever extends BroadcastReceiver{

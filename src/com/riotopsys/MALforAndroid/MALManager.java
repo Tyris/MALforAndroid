@@ -39,31 +39,32 @@ public class MALManager extends IntentService {
 			// get list from MAL
 			Log.i("MALManager", "syncing");
 			pullList(db);
+			schedule();
 		} else if (s.equals("SCHEDULE")) {
-			// Intent i = new Intent(this, MALManager.class);
-			// i.setAction(Intent.ACTION_SYNC);
-			SharedPreferences perfs = PreferenceManager.getDefaultSharedPreferences(this);
-			
-			//Integer fred = 0;
-			
-			int	interval= Integer.parseInt(perfs.getString("updateFreq", "360000"));
-			
-			Intent i = new Intent(this, MALManager.class);
-			i.setAction(Intent.ACTION_SYNC);
-			PendingIntent mAlarmSender = PendingIntent.getService(this, 0, i, 0);
+			schedule();
+		}
+		db.close();
+	}
+	
+	private void schedule(){
+		SharedPreferences perfs = PreferenceManager.getDefaultSharedPreferences(this);
 
-			// long firstTime = SystemClock.elapsedRealtime()+10*1000;
+		int interval = Integer.parseInt(perfs.getString("updateFreq", "360000"));
+
+		Intent i = new Intent(this, MALManager.class);
+		i.setAction(Intent.ACTION_SYNC);
+		PendingIntent mAlarmSender = PendingIntent.getService(this, 0, i, PendingIntent.FLAG_NO_CREATE);
+		if (mAlarmSender == null) {
+			mAlarmSender = PendingIntent.getService(this, 0, i, 0);
 			long firstTime = SystemClock.elapsedRealtime() + interval;
 
 			AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
-			// am.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, firstTime,
-			// 60 * 1000, mAlarmSender);
 			am.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, firstTime, interval, mAlarmSender);
 
 			Log.i("MALManager", "TIMER SET");
 		}
-		db.close();
 	}
+	
 
 	private void pullList(SQLiteDatabase db) {
 		try {
@@ -72,7 +73,7 @@ public class MALManager extends IntentService {
 			String api = perfs.getString("api", "");
 
 			if (!api.equals("") && !user.equals("")) {
-				
+
 				db.execSQL(getString(R.string.dirty));// all is dirt
 
 				URL url = new URL("http://" + api + "/animelist/" + user + "?format=xml");
@@ -82,7 +83,7 @@ public class MALManager extends IntentService {
 				SAXParser parser = factory.newSAXParser();
 				MALHandler handeler = new MALHandler(db);
 				parser.parse(in, handeler);
-				
+
 				db.execSQL(getString(R.string.clean));// remove the unclean ones
 
 				Intent i = new Intent("com.riotopsys.MALForAndroid.SYNC_COMPLETE");

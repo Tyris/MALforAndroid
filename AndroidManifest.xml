@@ -21,7 +21,8 @@
 				<category android:name="android.intent.category.HOME" />
 			</intent-filter>		
 		</receiver>
-	</application>
+	<activity android:name="AnimeDetail"></activity>
+</application>
     <uses-sdk android:minSdkVersion="7" />
 	<uses-permission android:name="android.permission.INTERNET"></uses-permission>
 </manifest> 
