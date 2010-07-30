@@ -183,11 +183,12 @@ public class main extends Activity {
 
 		@Override
 		public void onItemClick(AdapterView<?> arg0, View arg1, int position, long id) {
-			Toast.makeText(context, "item: "+ String.valueOf(id), Toast.LENGTH_LONG).show();			
+			//Toast.makeText(context, "item: "+ String.valueOf(id), Toast.LENGTH_LONG).show();			
 			Intent i = new Intent( context, AnimeDetail.class );
-			i.putExtra("id", id);
-			startActivity(i);			
-			
+			Bundle b = new Bundle();
+			b.putLong("id", id);
+			i.putExtras(b);
+			startActivity(i);						
 		}
 
 	}
