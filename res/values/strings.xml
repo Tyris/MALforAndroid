@@ -20,10 +20,13 @@ CREATE TABLE if not exists `animeList` (
   `score` INTEGER UNSIGNED NOT NULL,
   `watchedStatus` CHAR(40) NOT NULL,
   `dirty` INTEGER UNSIGNED NOT NULL DEFAULT 0,
+  `memberScore` CHAR(40) DEFAULT NULL,
+  `rank` CHAR(40) DEFAULT NULL,
+  `synopsis` BLOB DEFAULT NULL,
   PRIMARY KEY (`id`)
 )
     </string>
-	
+    
 	<string name="cursorSelect">
     	select id as `_id`, title, watchedEpisodes, episodes, score from `animeList`
     </string>

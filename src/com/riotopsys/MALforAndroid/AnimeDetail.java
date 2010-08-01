@@ -1,6 +1,7 @@
 package com.riotopsys.MALforAndroid;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
@@ -45,7 +46,7 @@ public class AnimeDetail extends Activity {
 
 		long id = b.getLong("id", 0);
 
-		String s = "select * from animeList where id = " + String.valueOf(id) + ";";
+		String s = "select * from animeList where id = " + String.valueOf(id);
 
 		Cursor c = db.rawQuery(s, null);
 
@@ -53,18 +54,33 @@ public class AnimeDetail extends Activity {
 			if (c.moveToFirst()) {
 
 				title.setText(c.getString(1));
-				progress.setText(c.getString(6)+" of "+c.getString(4));
+				progress.setText(c.getString(6) + " of " + c.getString(4));
 				score.setText("Score: " + c.getString(7));
 				status.setText(c.getString(5));
 				type.setText(c.getString(2));
 				watchedStatus.setText(c.getString(8));
 
-				memberScore.setText("");
-				rank.setText("");
-				synopsis.setText("");
+				if (!c.isNull(10)) {
+					memberScore.setText("Member Score: "+c.getString(10));
+					rank.setText("Rank: " + c.getString(11));
+					synopsis.setText(new String(c.getBlob(12)));
+
+				} else {
+					memberScore.setText("");
+					rank.setText("");
+					synopsis.setText("");
+
+					Intent i = new Intent(this, MALManager.class);
+					i.setAction("com.riotopsys.MALForAndroid.FETCH_EXTRAS");
+					// b = new Bundle();
+					// b.putLong("id", id);
+					i.putExtras(b);
+					startService(i);
+				}
 
 			}
 			c.close();
+
 		}
 
 		db.close();
