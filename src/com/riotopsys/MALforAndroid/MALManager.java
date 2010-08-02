@@ -11,9 +11,11 @@ import org.xml.sax.InputSource;
 import android.app.AlarmManager;
 import android.app.IntentService;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
@@ -32,32 +34,38 @@ public class MALManager extends IntentService {
 		MALSqlHelper openHelper = new MALSqlHelper(this.getBaseContext());
 		SQLiteDatabase db = openHelper.getWritableDatabase();
 
+		ConnectivityManager connect = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+
 		Log.i("MALManager", s);
 
 		if (s.equals(Intent.ACTION_SEND)) {
 			// send dirty to MAL
 		} else if (s.equals(Intent.ACTION_SYNC)) {
 			// get list from MAL
-			Log.i("MALManager", "syncing");
-			pullList(db);
-			schedule();
+			if (connect.getNetworkInfo(0).isConnected() || connect.getNetworkInfo(1).isConnected()) {
+				Log.i("MALManager", "syncing");
+				pullList(db);
+				schedule();
+			}
 		} else if (s.equals("SCHEDULE")) {
 			schedule();
 		} else if (s.equals("com.riotopsys.MALForAndroid.FETCH_EXTRAS")) {
-			Bundle b = intent.getExtras();
-			long id = b.getLong("id", 0);
-			pullExtras( db, id );
+			if (connect.getNetworkInfo(0).isConnected() || connect.getNetworkInfo(1).isConnected()) {
+				Bundle b = intent.getExtras();
+				long id = b.getLong("id", 0);
+				pullExtras(db, id);
+			}
 		}
 		db.close();
 	}
-	
-	private void pullExtras( SQLiteDatabase db, long id) {
+
+	private void pullExtras(SQLiteDatabase db, long id) {
 		try {
 			SharedPreferences perfs = PreferenceManager.getDefaultSharedPreferences(this);
-			//String user = perfs.getString("userName", "");
+			// String user = perfs.getString("userName", "");
 			String api = perfs.getString("api", "");
 
-			if (!api.equals("") ) {
+			if (!api.equals("")) {
 
 				URL url = new URL("http://" + api + "/anime/" + String.valueOf(id) + "?format=xml");
 				InputSource in = new InputSource(new InputStreamReader(url.openStream()));
@@ -65,7 +73,7 @@ public class MALManager extends IntentService {
 				SAXParserFactory factory = SAXParserFactory.newInstance();
 				SAXParser parser = factory.newSAXParser();
 				MALHandler handeler = new MALHandler(db);
-				parser.parse(in, handeler);				
+				parser.parse(in, handeler);
 
 				Intent i = new Intent("com.riotopsys.MALForAndroid.FETCH_COMPLETE");
 				sendBroadcast(i);
@@ -74,11 +82,11 @@ public class MALManager extends IntentService {
 			}
 
 		} catch (Exception e) {
-			Log.e("MALManager", "Failed to pull", e);			
-		}		
+			Log.e("MALManager", "Failed to pull", e);
+		}
 	}
 
-	private void schedule(){
+	private void schedule() {
 		SharedPreferences perfs = PreferenceManager.getDefaultSharedPreferences(this);
 
 		int interval = Integer.parseInt(perfs.getString("updateFreq", "360000"));
@@ -96,7 +104,6 @@ public class MALManager extends IntentService {
 			Log.i("MALManager", "TIMER SET");
 		}
 	}
-	
 
 	private void pullList(SQLiteDatabase db) {
 		try {
@@ -125,7 +132,7 @@ public class MALManager extends IntentService {
 			}
 
 		} catch (Exception e) {
-			Log.e("MALManager", "Failed to pull", e);			
+			Log.e("MALManager", "Failed to pull", e);
 		}
 	}
 }
