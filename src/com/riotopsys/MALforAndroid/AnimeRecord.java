@@ -38,7 +38,8 @@ public class AnimeRecord {
 		sb.append("status = ").append(addQuotes(status)).append(", ");
 		sb.append("watchedEpisodes = ").append(String.valueOf(watchedEpisodes)).append(", ");
 		sb.append("score = ").append(String.valueOf(score)).append(", ");
-		sb.append("watchedStatus = ").append(addQuotes(watchedStatus)); // .append(", ");
+		sb.append("watchedStatus = ").append(addQuotes(watchedStatus)).append(", ");
+		sb.append("dirty = 0 ");
 
 		sb.append("where id = ").append(String.valueOf(id));
 
