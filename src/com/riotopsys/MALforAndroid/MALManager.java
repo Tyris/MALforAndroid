@@ -1,11 +1,17 @@
 package com.riotopsys.MALforAndroid;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.net.URLConnection;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.apache.http.util.ByteArrayBuffer;
 import org.xml.sax.InputSource;
 
 import android.app.AlarmManager;
@@ -14,9 +20,11 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -54,9 +62,63 @@ public class MALManager extends IntentService {
 				Bundle b = intent.getExtras();
 				long id = b.getLong("id", 0);
 				pullExtras(db, id);
+				//pullImage(db, id);
+			}
+		} else if (s.equals("com.riotopsys.MALForAndroid.IMAGE")) {
+			if (connect.getNetworkInfo(0).isConnected() || connect.getNetworkInfo(1).isConnected()) {
+				Bundle b = intent.getExtras();
+				long id = b.getLong("id", 0);
+				pullImage(db, id);
 			}
 		}
 		db.close();
+	}
+
+	private void pullImage(SQLiteDatabase db, long id) {
+
+		String s = "select imageUrl from animeList where id = " + String.valueOf(id);
+
+		Cursor c = db.rawQuery(s, null);
+		c.moveToFirst();
+
+		try {//copypasta
+			URL url = new URL(c.getString(0));
+			URLConnection ucon = url.openConnection();
+
+			//File file = new File("sdcard/com.riotopsys.MALForAndroid.images/" + String.valueOf(id));
+			
+			File root = Environment.getExternalStorageDirectory();
+			File file = new File(root, "Android/data/com.riotopsys.MALForAndroid/images/" + String.valueOf(id));
+			//File file = new File( String.valueOf(id));
+			file.mkdirs();
+			if ( file.exists() ){
+				file.delete();
+			}
+			file.createNewFile();
+
+			ByteArrayBuffer baf = new ByteArrayBuffer(50);
+
+			InputStream is = ucon.getInputStream();
+
+			BufferedInputStream bis = new BufferedInputStream(is);
+
+			int current = 0;
+
+			while ((current = bis.read()) != -1) {
+
+				baf.append((byte) current);
+
+			}
+
+			/* Convert the Bytes read to a String. */
+			FileOutputStream fos = new FileOutputStream(file);
+			fos.write(baf.toByteArray());
+			fos.close();
+			Intent i = new Intent("com.riotopsys.MALForAndroid.FETCH_COMPLETE");
+			sendBroadcast(i);
+		} catch (Exception e) {
+			Log.e("MALManager", "Failed on img", e);
+		}
 	}
 
 	private void pullExtras(SQLiteDatabase db, long id) {
