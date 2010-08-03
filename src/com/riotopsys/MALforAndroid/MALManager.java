@@ -16,6 +16,8 @@ import org.xml.sax.InputSource;
 
 import android.app.AlarmManager;
 import android.app.IntentService;
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -168,6 +170,18 @@ public class MALManager extends IntentService {
 	}
 
 	private void pullList(SQLiteDatabase db) {
+		
+		NotificationManager mManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		Intent intent = new Intent(this,main.class);
+		
+		PendingIntent pi = PendingIntent.getService( this, 0, intent, 0 );
+
+	    Notification notification = new Notification(R.drawable.icon,"Synchonizing", System.currentTimeMillis());
+	    notification.setLatestEventInfo(this,"MAL for Android","Pulling anime list from MAL",pi);
+	    
+	    notification.flags |= Notification.FLAG_NO_CLEAR;
+	    mManager.notify(0, notification);
+		
 		try {
 			SharedPreferences perfs = PreferenceManager.getDefaultSharedPreferences(this);
 			String user = perfs.getString("userName", "");
@@ -196,5 +210,7 @@ public class MALManager extends IntentService {
 		} catch (Exception e) {
 			Log.e("MALManager", "Failed to pull", e);
 		}
+		
+		mManager.cancelAll();
 	}
 }
