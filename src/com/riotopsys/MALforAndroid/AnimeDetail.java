@@ -15,6 +15,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -89,47 +90,6 @@ public class AnimeDetail extends Activity {
 					rank.setText("Rank: " + c.getString(11));
 					synopsis.setText(new String(c.getBlob(12)));
 
-					File root = Environment.getExternalStorageDirectory();
-					File file = new File(root, "Android/data/com.riotopsys.MALForAndroid/images/" + String.valueOf(id));
-
-					if (file.exists()) {
-
-						try {
-							FileInputStream fis = new FileInputStream( file );
-							Bitmap bmImg = BitmapFactory.decodeStream(fis);
-							image.setImageBitmap(bmImg);
-							
-						} catch (FileNotFoundException e) {
-							e.printStackTrace();
-						}
-						
-						/*URL url;
-						try {// copypasta
-							url = new URL(c.getString(3));
-
-							HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-							conn.setDoInput(true);
-							conn.connect();
-							// int length = conn.getContentLength();
-							// int[] bitmapData = new int[length];
-							// byte[] bitmapData2 = new byte[length];
-							InputStream is = conn.getInputStream();
-
-							Bitmap bmImg = BitmapFactory.decodeStream(is);
-							image.setImageBitmap(bmImg);
-						} catch (Exception e) {
-							e.printStackTrace();
-						}*/
-
-					} else {
-						Intent i = new Intent(this, MALManager.class);
-						i.setAction("com.riotopsys.MALForAndroid.IMAGE");
-						Bundle b = new Bundle();
-						b.putLong("id", id);
-						i.putExtras(b);
-						startService(i);
-					}
-					
 				} else {
 					memberScore.setText("");
 					rank.setText("");
@@ -137,6 +97,28 @@ public class AnimeDetail extends Activity {
 
 					Intent i = new Intent(this, MALManager.class);
 					i.setAction("com.riotopsys.MALForAndroid.FETCH_EXTRAS");
+					Bundle b = new Bundle();
+					b.putLong("id", id);
+					i.putExtras(b);
+					startService(i);
+				}
+				
+				File root = Environment.getExternalStorageDirectory();
+				File file = new File(root, "Android/data/com.riotopsys.MALForAndroid/images/" + String.valueOf(id));
+
+				if (file.exists()) {
+
+					try {
+						FileInputStream fis = new FileInputStream( file );
+						Bitmap bmImg = BitmapFactory.decodeStream(fis);
+						image.setImageBitmap(bmImg);						
+					} catch (FileNotFoundException e) {
+						Log.e("AnimeDetail", "image error", e);
+					}
+					
+				} else {
+					Intent i = new Intent(this, MALManager.class);
+					i.setAction("com.riotopsys.MALForAndroid.IMAGE");
 					Bundle b = new Bundle();
 					b.putLong("id", id);
 					i.putExtras(b);
