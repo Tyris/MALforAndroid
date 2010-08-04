@@ -111,7 +111,16 @@ public class AnimeDetail extends Activity {
 					try {
 						FileInputStream fis = new FileInputStream( file );
 						Bitmap bmImg = BitmapFactory.decodeStream(fis);
-						image.setImageBitmap(bmImg);						
+						if ( bmImg != null ){						
+							image.setImageBitmap(bmImg);
+						} else {
+							Intent i = new Intent(this, MALManager.class);
+							i.setAction("com.riotopsys.MALForAndroid.IMAGE");
+							Bundle b = new Bundle();
+							b.putLong("id", id);
+							i.putExtras(b);
+							startService(i);
+						}
 					} catch (FileNotFoundException e) {
 						Log.e("AnimeDetail", "image error", e);
 					}
