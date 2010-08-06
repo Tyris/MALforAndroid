@@ -16,8 +16,12 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class AnimeDetail extends Activity {
 
@@ -42,6 +46,7 @@ public class AnimeDetail extends Activity {
 		setContentView(R.layout.detail);
 
 		intentFilter = new IntentFilter("com.riotopsys.MALForAndroid.FETCH_COMPLETE");
+		intentFilter.addAction("com.riotopsys.MALForAndroid.DELETE_COMPLETE");
 
 		rec = new Reciever();
 
@@ -102,16 +107,16 @@ public class AnimeDetail extends Activity {
 					i.putExtras(b);
 					startService(i);
 				}
-				
+
 				File root = Environment.getExternalStorageDirectory();
 				File file = new File(root, "Android/data/com.riotopsys.MALForAndroid/images/" + String.valueOf(id));
 
 				if (file.exists()) {
 
 					try {
-						FileInputStream fis = new FileInputStream( file );
+						FileInputStream fis = new FileInputStream(file);
 						Bitmap bmImg = BitmapFactory.decodeStream(fis);
-						if ( bmImg != null ){						
+						if (bmImg != null) {
 							image.setImageBitmap(bmImg);
 						} else {
 							Intent i = new Intent(this, MALManager.class);
@@ -124,7 +129,7 @@ public class AnimeDetail extends Activity {
 					} catch (FileNotFoundException e) {
 						Log.e("AnimeDetail", "image error", e);
 					}
-					
+
 				} else {
 					Intent i = new Intent(this, MALManager.class);
 					i.setAction("com.riotopsys.MALForAndroid.IMAGE");
@@ -143,6 +148,38 @@ public class AnimeDetail extends Activity {
 	}
 
 	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.detail, menu);
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		int itemId = item.getItemId();
+
+		Intent i = new Intent(this, MALManager.class);
+		//
+		Bundle b = new Bundle();
+		b.putLong("id", id);
+		i.putExtras(b);
+
+		switch (itemId) {
+			case R.id.detailMenuDelete:
+				i.setAction("com.riotopsys.MALForAndroid.DELETE");
+				//finish();
+				Toast.makeText(this, "Deleting Item...", Toast.LENGTH_SHORT).show();
+				break;
+			case R.id.detailMenuSync:
+				i.setAction("com.riotopsys.MALForAndroid.FETCH_EXTRAS");
+				break;
+		}
+
+		startService(i);
+		return true;
+	}
+
+	@Override
 	public void onPause() {
 		unregisterReceiver(rec);
 		super.onPause();
@@ -158,7 +195,11 @@ public class AnimeDetail extends Activity {
 
 		@Override
 		public void onReceive(Context arg0, Intent arg1) {
-			display();
+			if ( arg1.getAction().equals("com.riotopsys.MALForAndroid.DELETE_COMPLETE")){
+				finish();
+			} else {
+				display();
+			}
 		}
 
 	}

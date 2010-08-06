@@ -36,7 +36,7 @@ CREATE TABLE if not exists `animeList` (
     </string>
     
     <string name="clean">
-    	delete from animeList where dirty = 1;
+    	delete from animeList where not dirty = 0;
     </string>
     
     <string name="filter">Filter settings</string>
@@ -66,7 +66,7 @@ CREATE TABLE if not exists `animeList` (
     </string-array>
     
     <string-array name="filterWhere">
-        <item></item>
+        <item>where id is not null</item>
         <item>where watchedStatus = \"watching\"</item>
         <item>where watchedStatus = \"completed\"</item>
         <item>where watchedStatus = \"on-hold\"</item>

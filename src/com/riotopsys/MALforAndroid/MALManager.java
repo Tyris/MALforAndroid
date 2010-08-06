@@ -72,6 +72,11 @@ public class MALManager extends IntentService {
 				long id = b.getLong("id", 0);
 				pullImage(db, id);
 			}
+		} else if ( s.equals("com.riotopsys.MALForAndroid.DELETE") ){
+			Bundle b = intent.getExtras();
+			long id = b.getLong("id", 0);
+			db.execSQL("update animelist set dirty = 3 where id = "+ String.valueOf(id));
+			deleteDone();
 		}
 		db.close();
 	}
@@ -116,11 +121,20 @@ public class MALManager extends IntentService {
 			FileOutputStream fos = new FileOutputStream(file);
 			fos.write(baf.toByteArray());
 			fos.close();
-			Intent i = new Intent("com.riotopsys.MALForAndroid.FETCH_COMPLETE");
-			sendBroadcast(i);
+			fetchDone();
 		} catch (Exception e) {
 			Log.e("MALManager", "Failed on img", e);
 		}
+	}
+	
+	private void fetchDone(){
+		Intent i = new Intent("com.riotopsys.MALForAndroid.FETCH_COMPLETE");
+		sendBroadcast(i);
+	}
+	
+	private void deleteDone(){
+		Intent i = new Intent("com.riotopsys.MALForAndroid.DELETE_COMPLETE");
+		sendBroadcast(i);
 	}
 
 	private void pullExtras(SQLiteDatabase db, long id) {
@@ -139,8 +153,7 @@ public class MALManager extends IntentService {
 				MALHandler handeler = new MALHandler(db);
 				parser.parse(in, handeler);
 
-				Intent i = new Intent("com.riotopsys.MALForAndroid.FETCH_COMPLETE");
-				sendBroadcast(i);
+				fetchDone();
 			} else {
 				Log.e("MALManager", "user not configured");
 			}
@@ -201,8 +214,7 @@ public class MALManager extends IntentService {
 
 				db.execSQL(getString(R.string.clean));// remove the unclean ones
 
-				Intent i = new Intent("com.riotopsys.MALForAndroid.SYNC_COMPLETE");
-				sendBroadcast(i);
+				fetchDone();
 			} else {
 				Log.e("MALManager", "user not configured");
 			}

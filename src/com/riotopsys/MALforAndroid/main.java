@@ -72,7 +72,7 @@ public class main extends Activity {
 		spinner.setOnItemSelectedListener(new FilterSelected());
 		lv.setOnItemClickListener(new AnimeSelected(this.getBaseContext()));
 		
-		intentFilter = new IntentFilter("com.riotopsys.MALForAndroid.SYNC_COMPLETE");
+		intentFilter = new IntentFilter("com.riotopsys.MALForAndroid.FETCH_COMPLETE");
 		
 		rec = new Reciever();
 		
@@ -104,6 +104,7 @@ public class main extends Activity {
 	
 	@Override 
 	public void onResume(){
+		setFilter(lastChoice);
 		registerReceiver( rec, intentFilter );
 		super.onPause();
 	}
@@ -149,7 +150,7 @@ public class main extends Activity {
 	private void setFilter(int choice) {
 		lastChoice = choice;
 		Resources res = this.getResources();
-		String query = getString(R.string.cursorSelect) + res.getStringArray(R.array.filterWhere)[choice] + sort;
+		String query = getString(R.string.cursorSelect) + res.getStringArray(R.array.filterWhere)[choice]+ " and dirty <> 3 " + sort;
 
 		try {
 			Cursor c = db.rawQuery(query, null);
