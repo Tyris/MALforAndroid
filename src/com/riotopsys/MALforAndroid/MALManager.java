@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 
@@ -64,7 +65,7 @@ public class MALManager extends IntentService {
 				Bundle b = intent.getExtras();
 				long id = b.getLong("id", 0);
 				pullExtras(db, id);
-				//pullImage(db, id);
+				// pullImage(db, id);
 			}
 		} else if (s.equals("com.riotopsys.MALForAndroid.IMAGE")) {
 			if (connect.getNetworkInfo(0).isConnected() || connect.getNetworkInfo(1).isConnected()) {
@@ -72,13 +73,67 @@ public class MALManager extends IntentService {
 				long id = b.getLong("id", 0);
 				pullImage(db, id);
 			}
-		} else if ( s.equals("com.riotopsys.MALForAndroid.DELETE") ){
+		} else if (s.equals("com.riotopsys.MALForAndroid.DELETE")) {
 			Bundle b = intent.getExtras();
 			long id = b.getLong("id", 0);
-			db.execSQL("update animelist set dirty = 3 where id = "+ String.valueOf(id));
+			db.execSQL("update animelist set dirty = 3 where id = " + String.valueOf(id));
 			deleteDone();
+			pushDirty(db);
 		}
 		db.close();
+	}
+
+	private void pushDirty(SQLiteDatabase db) {
+		Cursor c = db.rawQuery("select * from animeList where dirty <> 0;", null);
+		if (c.moveToFirst()) {
+			while (!c.isAfterLast()) {
+				HttpURLConnection con;
+				switch (c.getInt(c.getColumnIndex("dirty"))) {
+					case 0:
+						Log.e("MALManage", "WTF i said no 0");
+						break;
+					case 1:
+						// only seen during an update
+						break;
+					case 2:
+						// just a change
+						break;
+					case 3:
+						// delete
+						long id = c.getLong(c.getColumnIndex("id"));
+						// DELETE http://mal-api.com/animelist/anime/1887
+						try {
+							SharedPreferences perfs = PreferenceManager.getDefaultSharedPreferences(this);
+							String user = perfs.getString("userName", "");
+							String api = perfs.getString("api", "");
+							String pass = perfs.getString("passwd", "");
+							
+							String cred = Base64.encodeBytes( (user+":"+pass).getBytes() );
+
+							URL url = new URL("http://"+ api + "/animelist/anime/" + String.valueOf(id));
+							
+							con = (HttpURLConnection) url.openConnection();
+							con.setReadTimeout(10000 /* milliseconds */);
+							con.setConnectTimeout(15000 /* milliseconds */);
+							con.setRequestMethod("DELETE");
+							con.setRequestProperty("Authorization", "Basic " + cred );
+							
+							con.connect();
+							
+							if ( con.getResponseCode() == 200 ){
+								db.execSQL("delete from animeList where id = " + String.valueOf(id));								
+							}							
+
+						} catch (Exception e) {
+							Log.e("MALManager", "pushDirty", e);
+						}
+						
+
+						break;
+				}
+				c.moveToNext();
+			}
+		}
 	}
 
 	private void pullImage(SQLiteDatabase db, long id) {
@@ -88,17 +143,18 @@ public class MALManager extends IntentService {
 		Cursor c = db.rawQuery(s, null);
 		c.moveToFirst();
 
-		try {//copypasta
+		try {// copypasta
 			URL url = new URL(c.getString(0));
 			URLConnection ucon = url.openConnection();
 
-			//File file = new File("sdcard/com.riotopsys.MALForAndroid.images/" + String.valueOf(id));
-			
+			// File file = new File("sdcard/com.riotopsys.MALForAndroid.images/"
+			// + String.valueOf(id));
+
 			File root = Environment.getExternalStorageDirectory();
 			File file = new File(root, "Android/data/com.riotopsys.MALForAndroid/images/" + String.valueOf(id));
-			//File file = new File( String.valueOf(id));
+			// File file = new File( String.valueOf(id));
 			file.mkdirs();
-			if ( file.exists() ){
+			if (file.exists()) {
 				file.delete();
 			}
 			file.createNewFile();
@@ -126,13 +182,13 @@ public class MALManager extends IntentService {
 			Log.e("MALManager", "Failed on img", e);
 		}
 	}
-	
-	private void fetchDone(){
+
+	private void fetchDone() {
 		Intent i = new Intent("com.riotopsys.MALForAndroid.FETCH_COMPLETE");
 		sendBroadcast(i);
 	}
-	
-	private void deleteDone(){
+
+	private void deleteDone() {
 		Intent i = new Intent("com.riotopsys.MALForAndroid.DELETE_COMPLETE");
 		sendBroadcast(i);
 	}
@@ -183,18 +239,18 @@ public class MALManager extends IntentService {
 	}
 
 	private void pullList(SQLiteDatabase db) {
-		
-		NotificationManager mManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		Intent intent = new Intent(this,main.class);
-		
-		PendingIntent pi = PendingIntent.getService( this, 0, intent, 0 );
 
-	    Notification notification = new Notification(R.drawable.icon,"Synchonizing", System.currentTimeMillis());
-	    notification.setLatestEventInfo(this,"MAL for Android","Pulling anime list from MAL",pi);
-	    
-	    notification.flags |= Notification.FLAG_NO_CLEAR;
-	    mManager.notify(0, notification);
-		
+		NotificationManager mManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		Intent intent = new Intent(this, main.class);
+
+		PendingIntent pi = PendingIntent.getService(this, 0, intent, 0);
+
+		Notification notification = new Notification(R.drawable.icon, "Synchonizing", System.currentTimeMillis());
+		notification.setLatestEventInfo(this, "MAL for Android", "Pulling anime list from MAL", pi);
+
+		notification.flags |= Notification.FLAG_NO_CLEAR;
+		mManager.notify(0, notification);
+
 		try {
 			SharedPreferences perfs = PreferenceManager.getDefaultSharedPreferences(this);
 			String user = perfs.getString("userName", "");
@@ -222,7 +278,7 @@ public class MALManager extends IntentService {
 		} catch (Exception e) {
 			Log.e("MALManager", "Failed to pull", e);
 		}
-		
+
 		mManager.cancelAll();
 	}
 }
