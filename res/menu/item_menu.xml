@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+xmlns:android="http://schemas.android.com/apk/res/android">
+
+	<item
+	android:id="@+id/setWatched"
+	android:title="Set Last Watched"/>
+	
+	<item
+	android:id="@+id/setScore"
+	android:title="Set Score"/>
+	
+	
+	<item
+	android:title="Change Status">
+		<menu>
+    		<group
+    		android:checkableBehavior="none">
+        		
+        		<item
+				android:id="@+id/itemStatusWatching"
+              	android:title="Watching" />
+              	
+              	<item
+              	android:id="@+id/itemStatusCompleted"
+              	android:title="Completed" />
+              	
+              	<item
+              	android:id="@+id/itemStatusOnHold"
+              	android:title="On Hold" />
+              	
+              	<item
+              	android:id="@+id/itemStatusDropped"
+              	android:title="Dropped" />
+              	
+              	<item
+              	android:id="@+id/itemStatusPlantoWatch"
+              	android:title="Plan to Watch" />
+              	
+    		</group>
+		</menu>
+	</item>
+	
+</menu>

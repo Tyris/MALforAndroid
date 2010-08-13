@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
@@ -50,11 +51,13 @@ public class MALManager extends IntentService {
 		Log.i("MALManager", s);
 
 		if (s.equals(Intent.ACTION_SEND)) {
+			pushDirty(db);
 			// send dirty to MAL
 		} else if (s.equals(Intent.ACTION_SYNC)) {
 			// get list from MAL
 			if (connect.getNetworkInfo(0).isConnected() || connect.getNetworkInfo(1).isConnected()) {
 				Log.i("MALManager", "syncing");
+				pushDirty(db);
 				pullList(db);
 				schedule();
 			}
@@ -79,15 +82,43 @@ public class MALManager extends IntentService {
 			db.execSQL("update animelist set dirty = 3 where id = " + String.valueOf(id));
 			deleteDone();
 			pushDirty(db);
+		} else if (s.equals("com.riotopsys.MALForAndroid.UPDATE")) {
+			update(db, intent.getExtras());
 		}
 		db.close();
 	}
 
+	private void update(SQLiteDatabase db, Bundle extras) {
+		long id = extras.getLong("id", 0);
+		StringBuffer sb = new StringBuffer("update animeList set ");
+		if (extras.containsKey("status")) {
+			sb.append(" watchedStatus = '").append(extras.getString("status"));
+		}
+		sb.append("', dirty = 2 where id = ").append(String.valueOf(id));
+		db.execSQL(sb.toString());
+		fetchDone();
+	}
+
 	private void pushDirty(SQLiteDatabase db) {
+		HttpURLConnection con;
+		URL url;
+
 		Cursor c = db.rawQuery("select * from animeList where dirty <> 0;", null);
+
+		SharedPreferences perfs = PreferenceManager.getDefaultSharedPreferences(this);
+		String user = perfs.getString("userName", "");
+		String api = perfs.getString("api", "");
+		String pass = perfs.getString("passwd", "");
+
+		String cred = Base64.encodeBytes((user + ":" + pass).getBytes());
+
+		StringBuffer sb = new StringBuffer();
+
 		if (c.moveToFirst()) {
 			while (!c.isAfterLast()) {
-				HttpURLConnection con;
+
+				long id = c.getLong(c.getColumnIndex("id"));
+
 				switch (c.getInt(c.getColumnIndex("dirty"))) {
 					case 0:
 						Log.e("MALManage", "WTF i said no 0");
@@ -97,38 +128,67 @@ public class MALManager extends IntentService {
 						break;
 					case 2:
 						// just a change
+
+						try {
+							sb.delete(0, sb.length());
+							url = new URL("http://" + api + "/animelist/anime/" + String.valueOf(id));
+
+							con = (HttpURLConnection) url.openConnection();
+							con.setDoOutput(true);
+							con.setReadTimeout(10000 );
+							con.setConnectTimeout(15000 );
+							con.setRequestMethod("PUT");
+							// con.setRequestMethod("POST");
+							con.setRequestProperty("Authorization", "Basic " + cred);
+							
+							//sb.append( "_method=PUT\n" );
+							sb.append("status=").append(c.getString(c.getColumnIndex("watchedStatus")));
+							sb.append("&").append("episodes=").append(String.valueOf(c.getInt(c.getColumnIndex("watchedEpisodes")))).append('\n');
+							sb.append("&").append("score=").append(String.valueOf(c.getInt(c.getColumnIndex("score")))).append('\n');
+							//sb.append("score=1\n");
+
+							OutputStreamWriter wr = new OutputStreamWriter(con.getOutputStream());
+
+							wr.write(sb.toString());
+							wr.flush();
+							wr.close();
+							
+							int fred = con.getResponseCode();
+							fred++;
+							// if (con.getResponseCode() == 200) {
+							// db.execSQL("delete from animeList where id = " +
+							// String.valueOf(id));
+							// Toast.makeText(this.getBaseContext(),
+							// "Waffles!, " +
+							// String.valueOf(),Toast.LENGTH_LONG).show();
+							// }
+
+						} catch (Exception e) {
+							Log.e("MALManager", "pushDirty:update", e);
+						}
+
 						break;
 					case 3:
 						// delete
-						long id = c.getLong(c.getColumnIndex("id"));
-						// DELETE http://mal-api.com/animelist/anime/1887
 						try {
-							SharedPreferences perfs = PreferenceManager.getDefaultSharedPreferences(this);
-							String user = perfs.getString("userName", "");
-							String api = perfs.getString("api", "");
-							String pass = perfs.getString("passwd", "");
-							
-							String cred = Base64.encodeBytes( (user+":"+pass).getBytes() );
 
-							URL url = new URL("http://"+ api + "/animelist/anime/" + String.valueOf(id));
-							
+							url = new URL("http://" + api + "/animelist/anime/" + String.valueOf(id));
+
 							con = (HttpURLConnection) url.openConnection();
 							con.setReadTimeout(10000 /* milliseconds */);
 							con.setConnectTimeout(15000 /* milliseconds */);
 							con.setRequestMethod("DELETE");
-							con.setRequestProperty("Authorization", "Basic " + cred );
-							
+							con.setRequestProperty("Authorization", "Basic " + cred);
+
 							con.connect();
-							
-							if ( con.getResponseCode() == 200 ){
-								db.execSQL("delete from animeList where id = " + String.valueOf(id));								
-							}							
+
+							if (con.getResponseCode() == 200) {
+								db.execSQL("delete from animeList where id = " + String.valueOf(id));
+							}
 
 						} catch (Exception e) {
-							Log.e("MALManager", "pushDirty", e);
+							Log.e("MALManager", "pushDirty:delete", e);
 						}
-						
-
 						break;
 				}
 				c.moveToNext();
