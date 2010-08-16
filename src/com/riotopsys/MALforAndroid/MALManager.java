@@ -94,6 +94,12 @@ public class MALManager extends IntentService {
 		if (extras.containsKey("status")) {
 			sb.append(" watchedStatus = '").append(extras.getString("status"));
 		}
+		if (extras.containsKey("watched")) {
+			sb.append(" watchedEpisodes = '").append(String.valueOf(extras.getInt("watched")));
+		}
+		if (extras.containsKey("score")) {
+			sb.append(" score = '").append(String.valueOf(extras.getInt("score")));
+		}
 		sb.append("', dirty = 2 where id = ").append(String.valueOf(id));
 		db.execSQL(sb.toString());
 		fetchDone();

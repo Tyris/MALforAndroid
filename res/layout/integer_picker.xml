@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+xmlns:android="http://schemas.android.com/apk/res/android"
+
+android:layout_height="fill_parent"
+android:orientation="vertical"
+android:layout_width="200dip">
+  
+  	<Button 
+	android:id="@+id/ButtonInc"
+	android:text="+" 
+	android:layout_height="wrap_content"
+	android:layout_width="fill_parent"/>
+		
+	<EditText
+	android:id="@+id/textValue"
+    android:layout_height="wrap_content"
+	android:layout_width="fill_parent"
+	android:numeric="integer"
+	android:lines="1"
+	android:gravity="center"/>
+	
+	<Button 
+	android:id="@+id/ButtonDec"
+	android:text="-" 
+	android:layout_height="wrap_content"
+	android:layout_width="fill_parent"
+	/>
+	
+	<Button 
+	android:id="@+id/ButtonDone"
+	android:text="Cancel" 
+	android:layout_height="wrap_content"
+	android:layout_width="fill_parent"/>
+  
+</LinearLayout>

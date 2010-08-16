@@ -3,6 +3,8 @@ package com.riotopsys.MALforAndroid;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnDismissListener;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -39,6 +41,10 @@ public class main extends Activity {
 	private IntentFilter intentFilter;
 	private long longClickId;
 
+	private IntegerPicker ipWatched;
+	private IntegerPicker ipScore;
+	private main self;
+
 	// private MALAdapter adapter;
 
 	/** Called when the activity is first created. */
@@ -48,6 +54,8 @@ public class main extends Activity {
 		setContentView(R.layout.main);
 
 		lv = (ListView) findViewById(R.id.lv);
+		
+		self = this;
 
 		Spinner spinner = (Spinner) findViewById(R.id.spinner);
 		ArrayAdapter<CharSequence> spinnnerAdapter = ArrayAdapter.createFromResource(this, R.array.filterArray, android.R.layout.simple_spinner_item);
@@ -83,6 +91,43 @@ public class main extends Activity {
 
 		registerReceiver(rec, intentFilter);
 
+		ipWatched = new IntegerPicker(this);
+		ipWatched.setTitle("Episodes Watched");
+		ipWatched.setOnDismissListener(new OnDismissListener(  ) {
+			@Override
+			public void onDismiss(DialogInterface dialog) {
+				//Log.i("watched", String.valueOf(ipWatched.wasCanceled()) + " " + String.valueOf(ipWatched.getCurrent()));
+				if ( !ipWatched.wasCanceled() ){
+					Intent i = new Intent( self, MALManager.class);
+					i.setAction("com.riotopsys.MALForAndroid.UPDATE");
+					Bundle b = new Bundle();
+					b.putLong("id", longClickId);
+					b.putInt("watched", ipWatched.getCurrent() );
+					i.putExtras(b);
+					startService(i);
+				}
+			}
+		});
+
+		ipScore = new IntegerPicker(this);
+		ipScore.setTitle("Set Score");
+		ipScore.setLimits(0, 10);
+		ipScore.setOnDismissListener(new OnDismissListener() {
+			@Override
+			public void onDismiss(DialogInterface dialog) {
+				//Log.i("watched", String.valueOf(ipScore.wasCanceled()) + " " + String.valueOf(ipScore.getCurrent()));
+				if ( !ipScore.wasCanceled() ){
+					Intent i = new Intent( self, MALManager.class);
+					i.setAction("com.riotopsys.MALForAndroid.UPDATE");
+					Bundle b = new Bundle();
+					b.putLong("id", longClickId);
+					b.putInt("score", ipScore.getCurrent() );
+					i.putExtras(b);
+					startService(i);
+				}
+			}
+		});
+
 		if (perfs.getString("userName", "").equals("") || perfs.getString("api", "").equals("")) {
 			Intent i = new Intent(this, Preferences.class);
 			startActivity(i);
@@ -99,20 +144,21 @@ public class main extends Activity {
 		super.onCreateContextMenu(menu, v, menuInfo);
 		MenuInflater inflater = getMenuInflater();
 		inflater.inflate(R.menu.item_menu, menu);
-		
+
 		longClickId = ((AdapterContextMenuInfo) menuInfo).id;
-			
+
 	}
 
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
-		
 
+		Cursor c;
 		Intent i = new Intent(this, MALManager.class);
 		i.setAction("com.riotopsys.MALForAndroid.UPDATE");
 		Bundle b = new Bundle();
 		b.putLong("id", longClickId);
 		
+
 		switch (item.getItemId()) {
 			case R.id.itemStatusCompleted:
 				b.putString("status", "completed");
@@ -129,17 +175,37 @@ public class main extends Activity {
 			case R.id.itemStatusWatching:
 				b.putString("status", "watching");
 				break;
-			case R.id.setWatched:				
+			case R.id.setWatched:
+				c = db.rawQuery("select * from animelist where id = " + String.valueOf(longClickId), null);
+				c.moveToFirst();
+				
+				int totalEp = c.getInt(c.getColumnIndex("episodes"));
+				if ( totalEp == 0 ){
+					totalEp = Integer.MAX_VALUE;
+				}
+				ipWatched.setLimits(0, totalEp);
+				ipWatched.setCurrent(c.getInt(c.getColumnIndex("watchedEpisodes")));
+				ipWatched.show();
+				c.close();
 				break;
 			case R.id.setScore:
+				
+				c = db.rawQuery("select * from animelist where id = " + String.valueOf(longClickId), null);
+				c.moveToFirst();
+				
+				ipScore.setLimits(0, 10);
+				ipScore.setCurrent(c.getInt(c.getColumnIndex("score")));
+				ipScore.show();
+				
+				c.close();
 				break;
 		}
-				
-		if ( b.keySet().size() > 1 ){
+
+		if (b.keySet().size() > 1) {
 			i.putExtras(b);
-			startService(i);			
-		}		
-		
+			startService(i);
+		}
+
 		return super.onContextItemSelected(item);
 	}
 
@@ -153,6 +219,7 @@ public class main extends Activity {
 	@Override
 	public void onPause() {
 		unregisterReceiver(rec);
+		//adapter.getCursor().close();
 		super.onPause();
 	}
 
@@ -206,6 +273,7 @@ public class main extends Activity {
 		String query = getString(R.string.cursorSelect) + res.getStringArray(R.array.filterWhere)[choice] + " and dirty <> 3 " + sort;
 
 		try {
+			//adapter.getCursor().close();
 			Cursor c = db.rawQuery(query, null);
 			adapter.changeCursor(c);
 		} catch (Exception e) {
