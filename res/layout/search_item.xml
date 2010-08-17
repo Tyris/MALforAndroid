@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+android:id="@+id/widget28"
+android:layout_width="fill_parent"
+android:layout_height="fill_parent"
+android:padding="8dip"
+xmlns:android="http://schemas.android.com/apk/res/android">
+	<TextView 
+	android:id="@+id/searchItemSynopsys"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="TextView"
+	android:layout_below="@+id/searchItemTitle"
+	android:layout_alignParentLeft="true">
+	</TextView>
+	<TextView
+	android:id="@+id/searchItemType"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="Type"
+	android:layout_alignParentTop="true"
+	android:layout_alignParentRight="true">
+	</TextView>
+	<TextView
+	android:id="@+id/searchItemTitle"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="Title"
+	android:layout_alignParentTop="true"
+	android:layout_alignParentLeft="true">
+	</TextView>
+</RelativeLayout>
+
+

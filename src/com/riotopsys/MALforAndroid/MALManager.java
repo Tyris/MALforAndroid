@@ -84,8 +84,62 @@ public class MALManager extends IntentService {
 			pushDirty(db);
 		} else if (s.equals("com.riotopsys.MALForAndroid.UPDATE")) {
 			update(db, intent.getExtras());
+		} else if (s.equals("com.riotopsys.MALForAndroid.ADD")) {
+			add(db, intent.getExtras());
 		}
 		db.close();
+	}
+
+	private void add(SQLiteDatabase db, Bundle extras) {
+		// long id = extras.getLong("id", 0);
+
+		SharedPreferences perfs = PreferenceManager.getDefaultSharedPreferences(this);
+		String user = perfs.getString("userName", "");
+		String api = perfs.getString("api", "");
+		String pass = perfs.getString("passwd", "");
+
+		String cred = Base64.encodeBytes((user + ":" + pass).getBytes());
+		try {
+			URL url = new URL("http://" + api + "/animelist/anime");
+
+			HttpURLConnection con = (HttpURLConnection) url.openConnection();
+			con.setDoOutput(true);
+			con.setReadTimeout(10000);
+			con.setConnectTimeout(15000);
+			con.setRequestMethod("POST");
+			con.setRequestProperty("Authorization", "Basic " + cred);
+
+			// sb.append( "_method=PUT\n" );
+			StringBuffer sb = new StringBuffer();
+			sb.append("anime_id=").append(extras.getString("id"));
+			sb.append("&status=").append(extras.getString("status"));
+
+			OutputStreamWriter wr = new OutputStreamWriter(con.getOutputStream());
+
+			wr.write(sb.toString());
+			wr.flush();
+			wr.close();
+
+			int fred = con.getResponseCode();
+			if (fred == 200) {
+				AnimeRecord ar = new AnimeRecord();
+				ar.id = Integer.parseInt(extras.getString("id"));
+				ar.imageUrl = "";
+				ar.memberScore = "";
+				ar.rank ="";
+				ar.status="";
+				ar.synopsis="";
+				ar.title="";
+				ar.type="";
+				ar.watchedStatus=extras.getString("status");
+								
+				db.execSQL(ar.insertStatement());
+				pullExtras( db, Long.parseLong(extras.getString("id"))); 
+			}
+
+		} catch (Exception e) {
+			Log.e("MALManager", "add", e);
+		}
 	}
 
 	private void update(SQLiteDatabase db, Bundle extras) {
@@ -141,24 +195,24 @@ public class MALManager extends IntentService {
 
 							con = (HttpURLConnection) url.openConnection();
 							con.setDoOutput(true);
-							con.setReadTimeout(10000 );
-							con.setConnectTimeout(15000 );
+							con.setReadTimeout(10000);
+							con.setConnectTimeout(15000);
 							con.setRequestMethod("PUT");
 							// con.setRequestMethod("POST");
 							con.setRequestProperty("Authorization", "Basic " + cred);
-							
-							//sb.append( "_method=PUT\n" );
+
+							// sb.append( "_method=PUT\n" );
 							sb.append("status=").append(c.getString(c.getColumnIndex("watchedStatus")));
 							sb.append("&").append("episodes=").append(String.valueOf(c.getInt(c.getColumnIndex("watchedEpisodes")))).append('\n');
 							sb.append("&").append("score=").append(String.valueOf(c.getInt(c.getColumnIndex("score")))).append('\n');
-							//sb.append("score=1\n");
+							// sb.append("score=1\n");
 
 							OutputStreamWriter wr = new OutputStreamWriter(con.getOutputStream());
 
 							wr.write(sb.toString());
 							wr.flush();
 							wr.close();
-							
+
 							int fred = con.getResponseCode();
 							fred++;
 							// if (con.getResponseCode() == 200) {
@@ -200,6 +254,7 @@ public class MALManager extends IntentService {
 				c.moveToNext();
 			}
 		}
+		c.close();
 	}
 
 	private void pullImage(SQLiteDatabase db, long id) {
@@ -247,6 +302,7 @@ public class MALManager extends IntentService {
 		} catch (Exception e) {
 			Log.e("MALManager", "Failed on img", e);
 		}
+		c.close();
 	}
 
 	private void fetchDone() {

@@ -256,6 +256,10 @@ public class main extends Activity {
 				i = new Intent(this, Preferences.class);
 				startActivity(i);
 				break;
+			case R.id.menuAdd:
+				i = new Intent(this, Search.class);
+				startActivity(i);
+				break;
 		}
 		return true;
 	}

@@ -53,7 +53,12 @@ public class AnimeRecord {
 			sb.append("update animeList set ");
 			sb.append("memberScore = ").append(addQuotes(memberScore)).append(", ");
 			sb.append("rank = ").append(addQuotes(rank)).append(", ");
-			sb.append("synopsis = ").append(addQuotes(synopsis));// .append(", ");
+			sb.append("synopsis = ").append(addQuotes(synopsis)).append(", ");
+			
+			sb.append("title = ").append(addQuotes(title)).append(", ");
+			sb.append("type = ").append(addQuotes(type)).append(", ");
+			sb.append("imageUrl = ").append(addQuotes(imageUrl)).append(", ");
+			sb.append("episodes = ").append(String.valueOf(episodes));//.append(", ");
 
 			sb.append(" where id = ").append(String.valueOf(id));
 			result = sb.toString();

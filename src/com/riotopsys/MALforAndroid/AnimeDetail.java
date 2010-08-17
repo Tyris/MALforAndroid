@@ -140,9 +140,10 @@ public class AnimeDetail extends Activity {
 				}
 
 			}
-			c.close();
+			
 
 		}
+		c.close();
 
 		db.close();
 	}
