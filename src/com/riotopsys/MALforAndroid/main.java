@@ -8,6 +8,7 @@ import android.content.DialogInterface.OnDismissListener;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -54,7 +55,7 @@ public class main extends Activity {
 		setContentView(R.layout.main);
 
 		lv = (ListView) findViewById(R.id.lv);
-		
+
 		self = this;
 
 		Spinner spinner = (Spinner) findViewById(R.id.spinner);
@@ -73,6 +74,7 @@ public class main extends Activity {
 
 		PreferenceManager.setDefaultValues(this, R.xml.preferances, false);
 		SharedPreferences perfs = PreferenceManager.getDefaultSharedPreferences(this);
+		perfs.registerOnSharedPreferenceChangeListener(new PerfChange());
 
 		if (savedInstanceState != null) {
 			sort = savedInstanceState.getString("sort");
@@ -93,16 +95,17 @@ public class main extends Activity {
 
 		ipWatched = new IntegerPicker(this);
 		ipWatched.setTitle("Episodes Watched");
-		ipWatched.setOnDismissListener(new OnDismissListener(  ) {
+		ipWatched.setOnDismissListener(new OnDismissListener() {
 			@Override
 			public void onDismiss(DialogInterface dialog) {
-				//Log.i("watched", String.valueOf(ipWatched.wasCanceled()) + " " + String.valueOf(ipWatched.getCurrent()));
-				if ( !ipWatched.wasCanceled() ){
-					Intent i = new Intent( self, MALManager.class);
+				// Log.i("watched", String.valueOf(ipWatched.wasCanceled()) +
+				// " " + String.valueOf(ipWatched.getCurrent()));
+				if (!ipWatched.wasCanceled()) {
+					Intent i = new Intent(self, MALManager.class);
 					i.setAction("com.riotopsys.MALForAndroid.UPDATE");
 					Bundle b = new Bundle();
 					b.putLong("id", longClickId);
-					b.putInt("watched", ipWatched.getCurrent() );
+					b.putInt("watched", ipWatched.getCurrent());
 					i.putExtras(b);
 					startService(i);
 				}
@@ -115,13 +118,14 @@ public class main extends Activity {
 		ipScore.setOnDismissListener(new OnDismissListener() {
 			@Override
 			public void onDismiss(DialogInterface dialog) {
-				//Log.i("watched", String.valueOf(ipScore.wasCanceled()) + " " + String.valueOf(ipScore.getCurrent()));
-				if ( !ipScore.wasCanceled() ){
-					Intent i = new Intent( self, MALManager.class);
+				// Log.i("watched", String.valueOf(ipScore.wasCanceled()) + " "
+				// + String.valueOf(ipScore.getCurrent()));
+				if (!ipScore.wasCanceled()) {
+					Intent i = new Intent(self, MALManager.class);
 					i.setAction("com.riotopsys.MALForAndroid.UPDATE");
 					Bundle b = new Bundle();
 					b.putLong("id", longClickId);
-					b.putInt("score", ipScore.getCurrent() );
+					b.putInt("score", ipScore.getCurrent());
 					i.putExtras(b);
 					startService(i);
 				}
@@ -157,7 +161,6 @@ public class main extends Activity {
 		i.setAction("com.riotopsys.MALForAndroid.UPDATE");
 		Bundle b = new Bundle();
 		b.putLong("id", longClickId);
-		
 
 		switch (item.getItemId()) {
 			case R.id.itemStatusCompleted:
@@ -178,9 +181,9 @@ public class main extends Activity {
 			case R.id.setWatched:
 				c = db.rawQuery("select * from animelist where id = " + String.valueOf(longClickId), null);
 				c.moveToFirst();
-				
+
 				int totalEp = c.getInt(c.getColumnIndex("episodes"));
-				if ( totalEp == 0 ){
+				if (totalEp == 0) {
 					totalEp = Integer.MAX_VALUE;
 				}
 				ipWatched.setLimits(0, totalEp);
@@ -189,14 +192,14 @@ public class main extends Activity {
 				c.close();
 				break;
 			case R.id.setScore:
-				
+
 				c = db.rawQuery("select * from animelist where id = " + String.valueOf(longClickId), null);
 				c.moveToFirst();
-				
+
 				ipScore.setLimits(0, 10);
 				ipScore.setCurrent(c.getInt(c.getColumnIndex("score")));
 				ipScore.show();
-				
+
 				c.close();
 				break;
 		}
@@ -219,7 +222,7 @@ public class main extends Activity {
 	@Override
 	public void onPause() {
 		unregisterReceiver(rec);
-		//adapter.getCursor().close();
+		// adapter.getCursor().close();
 		super.onPause();
 	}
 
@@ -277,7 +280,7 @@ public class main extends Activity {
 		String query = getString(R.string.cursorSelect) + res.getStringArray(R.array.filterWhere)[choice] + " and dirty <> 3 " + sort;
 
 		try {
-			//adapter.getCursor().close();
+			// adapter.getCursor().close();
 			Cursor c = db.rawQuery(query, null);
 			adapter.changeCursor(c);
 		} catch (Exception e) {
@@ -327,6 +330,17 @@ public class main extends Activity {
 			setFilter(lastChoice);
 		}
 
+	}
+
+	private class PerfChange implements OnSharedPreferenceChangeListener {
+		@Override
+		public void onSharedPreferenceChanged(SharedPreferences arg0, String key) {
+			if (key.equals("userName") || key.equals("passwd")) {
+				Intent i = new Intent(self, MALManager.class);
+				i.setAction(Intent.ACTION_SYNC);
+				startService(i);
+			}
+		}
 	}
 
 }
