@@ -32,7 +32,7 @@ CREATE TABLE if not exists `animeList` (
     </string>
     
     <string name="dirty">
-    	update animeList set dirty = 1;
+    	update animeList set dirty = 1 where dirty = 0;
     </string>
     
     <string name="clean">

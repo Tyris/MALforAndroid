@@ -45,8 +45,7 @@ public class AnimeDetail extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.detail);
 
-		intentFilter = new IntentFilter("com.riotopsys.MALForAndroid.FETCH_COMPLETE");
-		intentFilter.addAction("com.riotopsys.MALForAndroid.DELETE_COMPLETE");
+		intentFilter = new IntentFilter(MALManager.RELOAD);
 
 		rec = new Reciever();
 
@@ -66,7 +65,7 @@ public class AnimeDetail extends Activity {
 
 		Bundle b = getIntent().getExtras();
 
-		id = b.getLong("id", 0);
+		id = ((AnimeRecord) b.getSerializable("anime")).id;
 
 		display();
 
@@ -90,26 +89,26 @@ public class AnimeDetail extends Activity {
 				type.setText(c.getString(2));
 				watchedStatus.setText(c.getString(8));
 
-				if (!c.isNull(10)) {
-					memberScore.setText("Member Score: " + c.getString(10));
-					rank.setText("Rank: " + c.getString(11));
-					synopsis.setText(new String(c.getBlob(12)));
-
-				} else {
-					memberScore.setText("");
-					rank.setText("");
-					synopsis.setText("");
-
-					Intent i = new Intent(this, MALManager.class);
-					i.setAction("com.riotopsys.MALForAndroid.FETCH_EXTRAS");
-					Bundle b = new Bundle();
-					b.putLong("id", id);
-					i.putExtras(b);
-					startService(i);
-				}
+				memberScore.setText("Member Score: " + c.getString(10));
+				rank.setText("Rank: " + c.getString(11));
+				synopsis.setText(new String(c.getBlob(12)));
+				/*
+				 * } else { memberScore.setText(""); rank.setText("");
+				 * synopsis.setText("");
+				 * 
+				 * Intent i = new Intent(this, MALManager.class);
+				 * i.setAction("com.riotopsys.MALForAndroid.FETCH_EXTRAS");
+				 * Bundle b = new Bundle(); b.putLong("id", id); i.putExtras(b);
+				 * startService(i); }
+				 */
 
 				File root = Environment.getExternalStorageDirectory();
 				File file = new File(root, "Android/data/com.riotopsys.MALForAndroid/images/" + String.valueOf(id));
+				Intent i = new Intent(this, MALManager.class);
+				i.setAction(MALManager.IMAGE);
+				Bundle b = new Bundle();
+				b.putSerializable("anime", MALManager.getAnime(id, this.getBaseContext()));
+				i.putExtras(b);
 
 				if (file.exists()) {
 
@@ -119,11 +118,6 @@ public class AnimeDetail extends Activity {
 						if (bmImg != null) {
 							image.setImageBitmap(bmImg);
 						} else {
-							Intent i = new Intent(this, MALManager.class);
-							i.setAction("com.riotopsys.MALForAndroid.IMAGE");
-							Bundle b = new Bundle();
-							b.putLong("id", id);
-							i.putExtras(b);
 							startService(i);
 						}
 					} catch (FileNotFoundException e) {
@@ -131,16 +125,10 @@ public class AnimeDetail extends Activity {
 					}
 
 				} else {
-					Intent i = new Intent(this, MALManager.class);
-					i.setAction("com.riotopsys.MALForAndroid.IMAGE");
-					Bundle b = new Bundle();
-					b.putLong("id", id);
-					i.putExtras(b);
 					startService(i);
 				}
 
 			}
-			
 
 		}
 		c.close();
@@ -160,19 +148,19 @@ public class AnimeDetail extends Activity {
 		int itemId = item.getItemId();
 
 		Intent i = new Intent(this, MALManager.class);
-		//
+		// i.setAction(MALManager.IMAGE);
 		Bundle b = new Bundle();
-		b.putLong("id", id);
+		b.putSerializable("anime", MALManager.getAnime(id, this.getBaseContext()));
 		i.putExtras(b);
 
 		switch (itemId) {
 			case R.id.detailMenuDelete:
-				i.setAction("com.riotopsys.MALForAndroid.DELETE");
-				//finish();
+				i.setAction(MALManager.REMOVE);
+				// finish();
 				Toast.makeText(this, "Deleting Item...", Toast.LENGTH_SHORT).show();
 				break;
 			case R.id.detailMenuSync:
-				i.setAction("com.riotopsys.MALForAndroid.FETCH_EXTRAS");
+				i.setAction(MALManager.PULL);
 				break;
 		}
 
@@ -196,11 +184,11 @@ public class AnimeDetail extends Activity {
 
 		@Override
 		public void onReceive(Context arg0, Intent arg1) {
-			if ( arg1.getAction().equals("com.riotopsys.MALForAndroid.DELETE_COMPLETE")){
-				finish();
-			} else {
-				display();
-			}
+			/*
+			 * if (arg1.getAction().equals(
+			 * "com.riotopsys.MALForAndroid.DELETE_COMPLETE")) { finish(); }
+			 * else { display(); }
+			 */
 		}
 
 	}

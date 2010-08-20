@@ -11,7 +11,7 @@ public class BootStrap extends BroadcastReceiver {
 	public void onReceive(Context context, Intent intent) {
 		Log.i("BootStrap", "strapped");
 		Intent i = new Intent(context, MALManager.class);
-		i.setAction("SCHEDULE");
+		i.setAction(MALManager.SCHEDULE);
 		context.startService(i);
 	}
 

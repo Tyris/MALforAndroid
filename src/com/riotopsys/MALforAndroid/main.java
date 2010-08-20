@@ -40,11 +40,11 @@ public class main extends Activity {
 	private int lastChoice;
 	private Reciever rec;
 	private IntentFilter intentFilter;
-	private long longClickId;
 
 	private IntegerPicker ipWatched;
 	private IntegerPicker ipScore;
 	private main self;
+	private AnimeRecord LongClickRecord;
 
 	// private MALAdapter adapter;
 
@@ -87,7 +87,7 @@ public class main extends Activity {
 		spinner.setOnItemSelectedListener(new FilterSelected());
 		lv.setOnItemClickListener(new AnimeSelected(this.getBaseContext()));
 
-		intentFilter = new IntentFilter("com.riotopsys.MALForAndroid.FETCH_COMPLETE");
+		intentFilter = new IntentFilter(MALManager.RELOAD);
 
 		rec = new Reciever();
 
@@ -101,13 +101,16 @@ public class main extends Activity {
 				// Log.i("watched", String.valueOf(ipWatched.wasCanceled()) +
 				// " " + String.valueOf(ipWatched.getCurrent()));
 				if (!ipWatched.wasCanceled()) {
+
 					Intent i = new Intent(self, MALManager.class);
-					i.setAction("com.riotopsys.MALForAndroid.UPDATE");
+					i.setAction(MALManager.CHANGE);
 					Bundle b = new Bundle();
-					b.putLong("id", longClickId);
-					b.putInt("watched", ipWatched.getCurrent());
+					LongClickRecord.watchedEpisodes = ipWatched.getCurrent();
+					b.putSerializable("anime", LongClickRecord);
+
 					i.putExtras(b);
 					startService(i);
+
 				}
 			}
 		});
@@ -121,13 +124,16 @@ public class main extends Activity {
 				// Log.i("watched", String.valueOf(ipScore.wasCanceled()) + " "
 				// + String.valueOf(ipScore.getCurrent()));
 				if (!ipScore.wasCanceled()) {
+
 					Intent i = new Intent(self, MALManager.class);
-					i.setAction("com.riotopsys.MALForAndroid.UPDATE");
+					i.setAction(MALManager.CHANGE);
 					Bundle b = new Bundle();
-					b.putLong("id", longClickId);
-					b.putInt("score", ipScore.getCurrent());
+					LongClickRecord.score = ipScore.getCurrent();
+					b.putSerializable("anime", LongClickRecord);
+
 					i.putExtras(b);
 					startService(i);
+					
 				}
 			}
 		});
@@ -149,62 +155,60 @@ public class main extends Activity {
 		MenuInflater inflater = getMenuInflater();
 		inflater.inflate(R.menu.item_menu, menu);
 
-		longClickId = ((AdapterContextMenuInfo) menuInfo).id;
+		LongClickRecord = MALManager.getAnime(((AdapterContextMenuInfo) menuInfo).id, this.getBaseContext());
 
 	}
 
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
-
-		Cursor c;
-		Intent i = new Intent(this, MALManager.class);
-		i.setAction("com.riotopsys.MALForAndroid.UPDATE");
-		Bundle b = new Bundle();
-		b.putLong("id", longClickId);
+		boolean postIntent = false;
 
 		switch (item.getItemId()) {
 			case R.id.itemStatusCompleted:
-				b.putString("status", "completed");
+				LongClickRecord.status = "completed";
+				postIntent = true;
 				break;
 			case R.id.itemStatusDropped:
-				b.putString("status", "dropped");
+				LongClickRecord.status = "dropped";
+				postIntent = true;
 				break;
 			case R.id.itemStatusOnHold:
-				b.putString("status", "on-hold");
+				LongClickRecord.status = "on-hold";
+				postIntent = true;
 				break;
 			case R.id.itemStatusPlantoWatch:
-				b.putString("status", "plan to watch");
+				LongClickRecord.status = "plan to watch";
+				postIntent = true;
 				break;
 			case R.id.itemStatusWatching:
-				b.putString("status", "watching");
+				LongClickRecord.status = "watching";
+				postIntent = true;
 				break;
 			case R.id.setWatched:
-				c = db.rawQuery("select * from animelist where id = " + String.valueOf(longClickId), null);
-				c.moveToFirst();
 
-				int totalEp = c.getInt(c.getColumnIndex("episodes"));
+				int totalEp = LongClickRecord.episodes;
 				if (totalEp == 0) {
 					totalEp = Integer.MAX_VALUE;
 				}
 				ipWatched.setLimits(0, totalEp);
-				ipWatched.setCurrent(c.getInt(c.getColumnIndex("watchedEpisodes")));
+				ipWatched.setCurrent(LongClickRecord.watchedEpisodes);
 				ipWatched.show();
-				c.close();
+
 				break;
 			case R.id.setScore:
 
-				c = db.rawQuery("select * from animelist where id = " + String.valueOf(longClickId), null);
-				c.moveToFirst();
-
 				ipScore.setLimits(0, 10);
-				ipScore.setCurrent(c.getInt(c.getColumnIndex("score")));
+				ipScore.setCurrent(LongClickRecord.score);
 				ipScore.show();
 
-				c.close();
 				break;
 		}
 
-		if (b.keySet().size() > 1) {
+		if (postIntent) {
+			Intent i = new Intent(this, MALManager.class);
+			i.setAction(MALManager.CHANGE);
+			Bundle b = new Bundle();
+			b.putSerializable("anime", LongClickRecord);
 			i.putExtras(b);
 			startService(i);
 		}
@@ -252,7 +256,7 @@ public class main extends Activity {
 				break;
 			case R.id.menuSync:
 				i = new Intent(this, MALManager.class);
-				i.setAction(Intent.ACTION_SYNC);
+				i.setAction(MALManager.SYNC);
 				startService(i);
 				break;
 			case R.id.menuSettings:
@@ -337,7 +341,7 @@ public class main extends Activity {
 		public void onSharedPreferenceChanged(SharedPreferences arg0, String key) {
 			if (key.equals("userName") || key.equals("passwd")) {
 				Intent i = new Intent(self, MALManager.class);
-				i.setAction(Intent.ACTION_SYNC);
+				i.setAction(MALManager.SYNC);
 				startService(i);
 			}
 		}

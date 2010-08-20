@@ -1,8 +1,25 @@
 package com.riotopsys.MALforAndroid;
 
-public class AnimeRecord {
+import java.io.Serializable;
 
-	public int id;
+import org.json.JSONObject;
+
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
+
+public class AnimeRecord implements Serializable {
+
+	private final static long serialVersionUID = 2091730735738808331L;
+
+	private final static String LOG_NAME = "AnimeRecord.java";
+
+	public final static int CLEAN = 0;
+	public final static int UPDATING = 1;
+	public final static int UNSYNCED = 2;
+	public final static int DELETED = 3;
+
+	public long id;
 	public String title;
 	public String type;
 	public String imageUrl;
@@ -11,24 +28,88 @@ public class AnimeRecord {
 	public int watchedEpisodes;
 	public int score;
 	public String watchedStatus;
-
 	public String memberScore;
 	public String rank;
 	public String synopsis;
+	public int dirty;
 
-	public void animeRecord() {
-		memberScore = null;
-		rank = null;
-		synopsis = null;
+	public AnimeRecord() {
+		dirty = UNSYNCED;
 	}
 
-	public String insertStatement() {
+	public AnimeRecord(long id2, SQLiteDatabase db) {
+		pullFromDB(id2, db);
+	}
+
+	public AnimeRecord(JSONObject raw) {
+		try {
+			id = raw.getInt("id");
+			episodes = raw.getInt("episodes");
+			watchedEpisodes = raw.getInt("watched_episodes");
+			score = raw.getInt("score");
+
+			title = raw.getString("title");
+			type = raw.getString("type");
+			imageUrl = raw.getString("image_url");
+			status = raw.getString("status");
+			watchedStatus = raw.getString("watched_episodes");
+			memberScore = raw.getString("members_score");
+			rank = raw.getString("rank");
+			synopsis = raw.getString("synopsis");
+
+			dirty = CLEAN;
+		} catch (Exception e) {
+			Log.e(LOG_NAME, "JSON failed", e);
+		}
+	}
+
+	// loads fields from table
+	public void pullFromDB(long id, SQLiteDatabase db) {
+		Cursor c = db.rawQuery("select * from animeList where id = " + String.valueOf(id), null);
+		if (c.moveToFirst()) {
+			// c.getInt(c.getColumnIndex("watchedEpisodes"))
+			this.id = c.getInt(c.getColumnIndex("id"));
+			episodes = c.getInt(c.getColumnIndex("episodes"));
+			watchedEpisodes = c.getInt(c.getColumnIndex("watchedEpisodes"));
+			score = c.getInt(c.getColumnIndex("score"));
+
+			title = c.getString(c.getColumnIndex("title"));
+			type = c.getString(c.getColumnIndex("type"));
+			imageUrl = c.getString(c.getColumnIndex("imageUrl"));
+			status = c.getString(c.getColumnIndex("status"));
+			watchedStatus = c.getString(c.getColumnIndex("watchedStatus"));
+			memberScore = c.getString(c.getColumnIndex("memberScore"));
+			rank = c.getString(c.getColumnIndex("rank"));
+			synopsis = c.getString(c.getColumnIndex("synopsis"));
+
+			dirty = c.getInt(c.getColumnIndex("dirty"));
+		} else {
+			Log.e(LOG_NAME, "no record");
+		}
+		c.close();
+	}
+
+	public void pushToDB(SQLiteDatabase db) {
+		try {
+			db.execSQL(insertStatement());
+		} catch (Exception e) {
+			// Log.i("MALHandler", "insert", e);
+			try {
+				db.execSQL(updateStatement());
+			} catch (Exception e2) {
+				Log.i(LOG_NAME, "pushToDB", e2);
+			}
+		}
+	}
+
+	private String insertStatement() {
 		return "insert into `animeList` values (" + String.valueOf(id) + ", " + addQuotes(title) + ", " + addQuotes(type) + ", " + addQuotes(imageUrl) + ", "
 				+ String.valueOf(episodes) + ", " + addQuotes(status) + ", " + String.valueOf(watchedEpisodes) + ", " + String.valueOf(score) + ", "
-				+ addQuotes(watchedStatus) + ", 0,NULL,NULL,NULL)";
+				+ addQuotes(watchedStatus) + ", " + String.valueOf(dirty) + ", " + addQuotes(memberScore) + ", " + addQuotes(rank) + ", " + addQuotes(synopsis)
+				+ " )";
 	}
 
-	public String updateStatement() {
+	private String updateStatement() {
 		StringBuffer sb = new StringBuffer();
 		sb.append("update animeList set ");
 		sb.append("title = ").append(addQuotes(title)).append(", ");
@@ -39,35 +120,24 @@ public class AnimeRecord {
 		sb.append("watchedEpisodes = ").append(String.valueOf(watchedEpisodes)).append(", ");
 		sb.append("score = ").append(String.valueOf(score)).append(", ");
 		sb.append("watchedStatus = ").append(addQuotes(watchedStatus)).append(", ");
-		sb.append("dirty = 0 ");
+		sb.append("dirty = ").append(String.valueOf(dirty)).append(", ");
+		sb.append("memberScore = ").append(addQuotes(memberScore)).append(", ");
+		sb.append("rank = ").append(addQuotes(rank)).append(", ");
+		sb.append("synopsis = ").append(addQuotes(synopsis)).append(", ");
 
 		sb.append("where id = ").append(String.valueOf(id));
 
 		return sb.toString();
 	}
 
-	public String updateExtras() {
-		String result = null;
-		if (memberScore != null) {
-			StringBuffer sb = new StringBuffer();
-			sb.append("update animeList set ");
-			sb.append("memberScore = ").append(addQuotes(memberScore)).append(", ");
-			sb.append("rank = ").append(addQuotes(rank)).append(", ");
-			sb.append("synopsis = ").append(addQuotes(synopsis)).append(", ");
-			
-			sb.append("title = ").append(addQuotes(title)).append(", ");
-			sb.append("type = ").append(addQuotes(type)).append(", ");
-			sb.append("imageUrl = ").append(addQuotes(imageUrl)).append(", ");
-			sb.append("episodes = ").append(String.valueOf(episodes));//.append(", ");
-
-			sb.append(" where id = ").append(String.valueOf(id));
-			result = sb.toString();
+	private String addQuotes(String s) {
+		String result;
+		if (s != null) {
+			result = "'" + s.replace("'", "''") + "'";
+		} else {
+			result = "NULL";
 		}
 		return result;
-	}
-
-	private String addQuotes(String s) {
-		return "'" + s.replace("'", "''") + "'";
 	}
 
 }

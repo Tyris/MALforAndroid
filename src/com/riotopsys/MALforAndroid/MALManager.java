@@ -1,6 +1,7 @@
 package com.riotopsys.MALforAndroid;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -10,15 +11,12 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
 import org.apache.http.util.ByteArrayBuffer;
-import org.xml.sax.InputSource;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import android.app.AlarmManager;
 import android.app.IntentService;
-import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -35,204 +33,342 @@ import android.util.Log;
 
 public class MALManager extends IntentService {
 
+	// push single anime record to mal
+	public final static String PUSH = "com.riotopsys.MALForAndroid.PUSH";
+
+	// pull single anime record from mal
+	public final static String PULL = "com.riotopsys.MALForAndroid.PULL";
+
+	// push all dirty to MAL then pull all from MAL
+	public final static String SYNC = "com.riotopsys.MALForAndroid.SYNC";
+
+	// add new anime to DB and MAL then PULLS it
+	public final static String ADD = "com.riotopsys.MALForAndroid.ADD";
+
+	// deletes record from MAL and DB
+	public final static String REMOVE = "com.riotopsys.MALForAndroid.REMOVE";
+
+	// updates record with new settings
+	public final static String CHANGE = "com.riotopsys.MALForAndroid.CHANGE";
+
+	// pulls image
+	public final static String IMAGE = "com.riotopsys.MALForAndroid.IMAGE";
+
+	// Schedules next sync
+	public final static String SCHEDULE = "com.riotopsys.MALForAndroid.SCHEDULE";
+
+	// signals change to underlying data
+	public final static String RELOAD = "com.riotopsys.MALForAndroid.RELOAD";
+
+	// logging definition
+	private final static String LOG_NAME = "MALManager.java";
+
+	private String user;
+	private String api;
+	private String pass;
+	private String cred;
+
+	private boolean activeConnection;
+
 	public MALManager() {
-		super("MALManager");
+		super(LOG_NAME);
 	}
 
 	@Override
 	protected void onHandleIntent(Intent intent) {
 		String s = intent.getAction();
+		Bundle b = intent.getExtras();
+		AnimeRecord ar = null;
+		if (b != null) {
+			ar = (AnimeRecord) b.getSerializable("anime");
+		}
 
 		MALSqlHelper openHelper = new MALSqlHelper(this.getBaseContext());
 		SQLiteDatabase db = openHelper.getWritableDatabase();
 
+		SharedPreferences perfs = PreferenceManager.getDefaultSharedPreferences(this);
+		user = perfs.getString("userName", "");
+		api = perfs.getString("api", "");
+		pass = perfs.getString("passwd", "");
+
+		cred = Base64.encodeBytes((user + ":" + pass).getBytes());
+
 		ConnectivityManager connect = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+		activeConnection = (connect.getNetworkInfo(0).isConnected() || connect.getNetworkInfo(1).isConnected());
 
-		Log.i("MALManager", s);
+		Log.i(LOG_NAME, s);
 
-		if (s.equals(Intent.ACTION_SEND)) {
-			pushDirty(db);
-			// send dirty to MAL
-		} else if (s.equals(Intent.ACTION_SYNC)) {
-			// get list from MAL
-			if (connect.getNetworkInfo(0).isConnected() || connect.getNetworkInfo(1).isConnected()) {
-				Log.i("MALManager", "syncing");
-				pushDirty(db);
-				pullList(db);
-				schedule();
-			}
-		} else if (s.equals("SCHEDULE")) {
+		if (s.equals(PUSH)) {
+			push(db, ar);
+		} else if (s.equals(PULL)) {
+			pull(db, ar);
+		} else if (s.equals(SYNC)) {
+			sync(db);
+		} else if (s.equals(ADD)) {
+			add(db, ar);
+		} else if (s.equals(REMOVE)) {
+			remove(db, ar);
+		} else if (s.equals(CHANGE)) {
+			change(db, ar);
+		} else if (s.equals(IMAGE)) {
+			pullImage(db, ar);
+		} else if (s.equals(SCHEDULE)) {
 			schedule();
-		} else if (s.equals("com.riotopsys.MALForAndroid.FETCH_EXTRAS")) {
-			if (connect.getNetworkInfo(0).isConnected() || connect.getNetworkInfo(1).isConnected()) {
-				Bundle b = intent.getExtras();
-				long id = b.getLong("id", 0);
-				pullExtras(db, id);
-				// pullImage(db, id);
-			}
-		} else if (s.equals("com.riotopsys.MALForAndroid.IMAGE")) {
-			if (connect.getNetworkInfo(0).isConnected() || connect.getNetworkInfo(1).isConnected()) {
-				Bundle b = intent.getExtras();
-				long id = b.getLong("id", 0);
-				pullImage(db, id);
-			}
-		} else if (s.equals("com.riotopsys.MALForAndroid.DELETE")) {
-			Bundle b = intent.getExtras();
-			long id = b.getLong("id", 0);
-			db.execSQL("update animelist set dirty = 3 where id = " + String.valueOf(id));
-			deleteDone();
-			pushDirty(db);
-		} else if (s.equals("com.riotopsys.MALForAndroid.UPDATE")) {
-			update(db, intent.getExtras());
-		} else if (s.equals("com.riotopsys.MALForAndroid.ADD")) {
-			add(db, intent.getExtras());
+		} else {
+			Log.i("MALManager", "unknown intent: " + s);
 		}
 		db.close();
 	}
 
-	private void add(SQLiteDatabase db, Bundle extras) {
-		// long id = extras.getLong("id", 0);
-
-		SharedPreferences perfs = PreferenceManager.getDefaultSharedPreferences(this);
-		String user = perfs.getString("userName", "");
-		String api = perfs.getString("api", "");
-		String pass = perfs.getString("passwd", "");
-
-		String cred = Base64.encodeBytes((user + ":" + pass).getBytes());
-		try {
-			URL url = new URL("http://" + api + "/animelist/anime");
-
-			HttpURLConnection con = (HttpURLConnection) url.openConnection();
-			con.setDoOutput(true);
-			con.setReadTimeout(10000);
-			con.setConnectTimeout(15000);
-			con.setRequestMethod("POST");
-			con.setRequestProperty("Authorization", "Basic " + cred);
-
-			// sb.append( "_method=PUT\n" );
+	private void push(SQLiteDatabase db, AnimeRecord ar) {
+		if (activeConnection) {
+			long id = ar.id;
 			StringBuffer sb = new StringBuffer();
-			sb.append("anime_id=").append(extras.getString("id"));
-			sb.append("&status=").append(extras.getString("status"));
+			URL url;
+			try {
+				url = new URL("http://" + api + "/animelist/anime/" + String.valueOf(id));
 
-			OutputStreamWriter wr = new OutputStreamWriter(con.getOutputStream());
+				HttpURLConnection con = (HttpURLConnection) url.openConnection();
+				con.setDoOutput(true);
+				con.setReadTimeout(10000);
+				con.setConnectTimeout(15000);
+				con.setRequestMethod("PUT");
+				con.setRequestProperty("Authorization", "Basic " + cred);
 
-			wr.write(sb.toString());
-			wr.flush();
-			wr.close();
+				// sb.append( "_method=PUT\n" );
+				sb.append("status=").append(ar.status);
+				sb.append("&").append("episodes=").append(String.valueOf(ar.episodes));
+				sb.append("&").append("score=").append(String.valueOf(ar.score));
 
-			int fred = con.getResponseCode();
-			if (fred == 200) {
-				AnimeRecord ar = new AnimeRecord();
-				ar.id = Integer.parseInt(extras.getString("id"));
-				ar.imageUrl = "";
-				ar.memberScore = "";
-				ar.rank ="";
-				ar.status="";
-				ar.synopsis="";
-				ar.title="";
-				ar.type="";
-				ar.watchedStatus=extras.getString("status");
-								
-				db.execSQL(ar.insertStatement());
-				pullExtras( db, Long.parseLong(extras.getString("id"))); 
+				OutputStreamWriter wr = new OutputStreamWriter(con.getOutputStream());
+
+				wr.write(sb.toString());
+				wr.flush();
+				wr.close();
+
+				if (200 == con.getResponseCode()) {
+					ar.dirty = AnimeRecord.CLEAN;
+					ar.pushToDB(db);
+				}
+			} catch (Exception e) {
+				Log.e(LOG_NAME, "push", e);
 			}
-
-		} catch (Exception e) {
-			Log.e("MALManager", "add", e);
 		}
 	}
 
-	private void update(SQLiteDatabase db, Bundle extras) {
-		long id = extras.getLong("id", 0);
-		StringBuffer sb = new StringBuffer("update animeList set ");
-		if (extras.containsKey("status")) {
-			sb.append(" watchedStatus = '").append(extras.getString("status"));
+	private void pull(SQLiteDatabase db, AnimeRecord ar) {
+		if (activeConnection) {
+			if (ar != null) {
+				long id = ar.id;
+				URL url;
+				try {
+					// http://mal-api.com/anime/53?format=xml&mine=1
+					url = new URL("http://" + api + "/anime/" + String.valueOf(id) + "&mine=1");
+
+					HttpURLConnection con = (HttpURLConnection) url.openConnection();
+					con.setReadTimeout(10000);
+					con.setConnectTimeout(15000);
+					con.setRequestProperty("Authorization", "Basic " + cred);
+
+					BufferedReader rd = new BufferedReader(new InputStreamReader(con.getInputStream()), 512);
+					String line;
+					StringBuffer sb = new StringBuffer();
+					while ((line = rd.readLine()) != null) {
+						sb.append(line);
+					}
+					rd.close();
+
+					JSONObject raw = new JSONObject(sb.toString());
+
+					AnimeRecord ar2 = new AnimeRecord(raw);
+
+					ar2.pushToDB(db);
+					reloadSignal();
+
+					// int fred = con.getResponseCode();
+				} catch (Exception e) {
+					Log.e(LOG_NAME, "push", e);
+				}
+			} else {
+				Log.e(LOG_NAME, "null bundle");
+			}
 		}
-		if (extras.containsKey("watched")) {
-			sb.append(" watchedEpisodes = '").append(String.valueOf(extras.getInt("watched")));
+	}
+
+	private void sync(SQLiteDatabase db) {
+		if (activeConnection) {
+			NotificationManager mManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+			pushDirty(db);
+
+			AnimeRecord ar = new AnimeRecord();
+			try {
+
+				db.execSQL(getString(R.string.dirty));// all is dirt
+
+				URL url = new URL("http://" + api + "/animelist/" + user + "?format=xml");
+				// InputSource in = new InputSource(new
+				// InputStreamReader(url.openStream()));
+
+				BufferedReader rd = new BufferedReader(new InputStreamReader(url.openConnection().getInputStream()), 512);
+				String line;
+				StringBuffer sb = new StringBuffer();
+				while ((line = rd.readLine()) != null) {
+					sb.append(line);
+				}
+				rd.close();
+
+				JSONArray raw = new JSONArray(sb.toString());
+				for (int c = 0; c < raw.length(); c++) {
+					JSONObject jo = raw.getJSONObject(c);
+					ar.pullFromDB(jo.getInt("id"), db);
+					pull(db, ar);
+				}
+
+				db.execSQL(getString(R.string.clean));// remove the unclean ones
+
+			} catch (Exception e) {
+				Log.e(LOG_NAME, "Sync failed", e);
+			}
+
+			mManager.cancelAll();
 		}
-		if (extras.containsKey("score")) {
-			sb.append(" score = '").append(String.valueOf(extras.getInt("score")));
+		schedule();
+	}
+
+	private void add(SQLiteDatabase db, AnimeRecord ar) {
+		if (activeConnection) {
+			try {
+				URL url = new URL("http://" + api + "/animelist/anime");
+
+				HttpURLConnection con = (HttpURLConnection) url.openConnection();
+				con.setDoOutput(true);
+				con.setReadTimeout(10000);
+				con.setConnectTimeout(15000);
+				con.setRequestMethod("POST");
+				con.setRequestProperty("Authorization", "Basic " + cred);
+
+				// sb.append( "_method=PUT\n" );
+				StringBuffer sb = new StringBuffer();
+				sb.append("anime_id=").append(ar.id);
+				sb.append("&status=").append(ar.status);
+
+				OutputStreamWriter wr = new OutputStreamWriter(con.getOutputStream());
+
+				wr.write(sb.toString());
+				wr.flush();
+				wr.close();
+
+				int fred = con.getResponseCode();
+				if (fred == 200) {
+					pull(db, ar);
+				}
+
+			} catch (Exception e) {
+				Log.e(LOG_NAME, "add", e);
+			}
 		}
-		sb.append("', dirty = 2 where id = ").append(String.valueOf(id));
-		db.execSQL(sb.toString());
-		fetchDone();
+	}
+
+	private void remove(SQLiteDatabase db, AnimeRecord ar) {
+		ar.dirty = AnimeRecord.DELETED;
+		reloadSignal();
+		if (activeConnection) {
+			try {
+				URL url = new URL("http://" + api + "/animelist/anime/" + String.valueOf(ar.id));
+
+				HttpURLConnection con = (HttpURLConnection) url.openConnection();
+				con.setReadTimeout(10000 /* milliseconds */);
+				con.setConnectTimeout(15000 /* milliseconds */);
+				con.setRequestMethod("DELETE");
+				con.setRequestProperty("Authorization", "Basic " + cred);
+
+				con.connect();
+
+				if (con.getResponseCode() == 200) {
+					db.execSQL("delete from animeList where id = " + String.valueOf(ar.id));
+				}
+			} catch (Exception e) {
+				Log.e(LOG_NAME, "remove", e);
+			}
+		}
+	}
+
+	private void change(SQLiteDatabase db, AnimeRecord ar) {
+		ar.dirty = AnimeRecord.UNSYNCED;
+		ar.pushToDB(db);
+		reloadSignal();
+		if (activeConnection) {
+			push(db, ar);
+		}
+	}
+
+	private void pullImage(SQLiteDatabase db, AnimeRecord ar) {
+		if (activeConnection) {
+			try {
+				URL url = new URL(ar.imageUrl);
+				URLConnection ucon = url.openConnection();
+
+				File root = Environment.getExternalStorageDirectory();
+				File file = new File(root, "Android/data/com.riotopsys.MALForAndroid/images/" + String.valueOf(ar));
+				file.mkdirs();
+				if (file.exists()) {
+					file.delete();
+				}
+				file.createNewFile();
+
+				ByteArrayBuffer baf = new ByteArrayBuffer(50);
+
+				InputStream is = ucon.getInputStream();
+
+				BufferedInputStream bis = new BufferedInputStream(is);
+
+				int current = 0;
+
+				while ((current = bis.read()) != -1) {
+
+					baf.append((byte) current);
+
+				}
+
+				/* Convert the Bytes read to a String. */
+				FileOutputStream fos = new FileOutputStream(file);
+				fos.write(baf.toByteArray());
+				fos.close();
+				reloadSignal();
+			} catch (Exception e) {
+				Log.e(LOG_NAME, "Failed on img", e);
+			}
+		}
 	}
 
 	private void pushDirty(SQLiteDatabase db) {
 		HttpURLConnection con;
 		URL url;
 
-		Cursor c = db.rawQuery("select * from animeList where dirty <> 0;", null);
-
-		SharedPreferences perfs = PreferenceManager.getDefaultSharedPreferences(this);
-		String user = perfs.getString("userName", "");
-		String api = perfs.getString("api", "");
-		String pass = perfs.getString("passwd", "");
-
-		String cred = Base64.encodeBytes((user + ":" + pass).getBytes());
-
-		StringBuffer sb = new StringBuffer();
+		Cursor c = db.rawQuery("select id from animeList where dirty <> 0;", null);
 
 		if (c.moveToFirst()) {
 			while (!c.isAfterLast()) {
 
-				long id = c.getLong(c.getColumnIndex("id"));
+				AnimeRecord ar = new AnimeRecord(c.getInt(c.getColumnIndex("id")), db);
 
-				switch (c.getInt(c.getColumnIndex("dirty"))) {
-					case 0:
-						Log.e("MALManage", "WTF i said no 0");
+				switch (ar.dirty) {
+					case AnimeRecord.CLEAN:
+						Log.e(LOG_NAME, "WTF i said no 0");
 						break;
-					case 1:
+					case AnimeRecord.UPDATING:
 						// only seen during an update
 						break;
-					case 2:
+					case AnimeRecord.UNSYNCED:
 						// just a change
-
-						try {
-							sb.delete(0, sb.length());
-							url = new URL("http://" + api + "/animelist/anime/" + String.valueOf(id));
-
-							con = (HttpURLConnection) url.openConnection();
-							con.setDoOutput(true);
-							con.setReadTimeout(10000);
-							con.setConnectTimeout(15000);
-							con.setRequestMethod("PUT");
-							// con.setRequestMethod("POST");
-							con.setRequestProperty("Authorization", "Basic " + cred);
-
-							// sb.append( "_method=PUT\n" );
-							sb.append("status=").append(c.getString(c.getColumnIndex("watchedStatus")));
-							sb.append("&").append("episodes=").append(String.valueOf(c.getInt(c.getColumnIndex("watchedEpisodes")))).append('\n');
-							sb.append("&").append("score=").append(String.valueOf(c.getInt(c.getColumnIndex("score")))).append('\n');
-							// sb.append("score=1\n");
-
-							OutputStreamWriter wr = new OutputStreamWriter(con.getOutputStream());
-
-							wr.write(sb.toString());
-							wr.flush();
-							wr.close();
-
-							int fred = con.getResponseCode();
-							fred++;
-							// if (con.getResponseCode() == 200) {
-							// db.execSQL("delete from animeList where id = " +
-							// String.valueOf(id));
-							// Toast.makeText(this.getBaseContext(),
-							// "Waffles!, " +
-							// String.valueOf(),Toast.LENGTH_LONG).show();
-							// }
-
-						} catch (Exception e) {
-							Log.e("MALManager", "pushDirty:update", e);
-						}
-
+						push(db, ar);
 						break;
-					case 3:
+					case AnimeRecord.DELETED:
 						// delete
 						try {
 
-							url = new URL("http://" + api + "/animelist/anime/" + String.valueOf(id));
+							url = new URL("http://" + api + "/animelist/anime/" + String.valueOf(ar.id));
 
 							con = (HttpURLConnection) url.openConnection();
 							con.setReadTimeout(10000 /* milliseconds */);
@@ -243,11 +379,11 @@ public class MALManager extends IntentService {
 							con.connect();
 
 							if (con.getResponseCode() == 200) {
-								db.execSQL("delete from animeList where id = " + String.valueOf(id));
+								db.execSQL("delete from animeList where id = " + String.valueOf(ar.id));
 							}
 
 						} catch (Exception e) {
-							Log.e("MALManager", "pushDirty:delete", e);
+							Log.e(LOG_NAME, "push dirty", e);
 						}
 						break;
 				}
@@ -255,90 +391,12 @@ public class MALManager extends IntentService {
 			}
 		}
 		c.close();
+		reloadSignal();
 	}
 
-	private void pullImage(SQLiteDatabase db, long id) {
-
-		String s = "select imageUrl from animeList where id = " + String.valueOf(id);
-
-		Cursor c = db.rawQuery(s, null);
-		c.moveToFirst();
-
-		try {// copypasta
-			URL url = new URL(c.getString(0));
-			URLConnection ucon = url.openConnection();
-
-			// File file = new File("sdcard/com.riotopsys.MALForAndroid.images/"
-			// + String.valueOf(id));
-
-			File root = Environment.getExternalStorageDirectory();
-			File file = new File(root, "Android/data/com.riotopsys.MALForAndroid/images/" + String.valueOf(id));
-			// File file = new File( String.valueOf(id));
-			file.mkdirs();
-			if (file.exists()) {
-				file.delete();
-			}
-			file.createNewFile();
-
-			ByteArrayBuffer baf = new ByteArrayBuffer(50);
-
-			InputStream is = ucon.getInputStream();
-
-			BufferedInputStream bis = new BufferedInputStream(is);
-
-			int current = 0;
-
-			while ((current = bis.read()) != -1) {
-
-				baf.append((byte) current);
-
-			}
-
-			/* Convert the Bytes read to a String. */
-			FileOutputStream fos = new FileOutputStream(file);
-			fos.write(baf.toByteArray());
-			fos.close();
-			fetchDone();
-		} catch (Exception e) {
-			Log.e("MALManager", "Failed on img", e);
-		}
-		c.close();
-	}
-
-	private void fetchDone() {
-		Intent i = new Intent("com.riotopsys.MALForAndroid.FETCH_COMPLETE");
+	private void reloadSignal() {
+		Intent i = new Intent(RELOAD);
 		sendBroadcast(i);
-	}
-
-	private void deleteDone() {
-		Intent i = new Intent("com.riotopsys.MALForAndroid.DELETE_COMPLETE");
-		sendBroadcast(i);
-	}
-
-	private void pullExtras(SQLiteDatabase db, long id) {
-		try {
-			SharedPreferences perfs = PreferenceManager.getDefaultSharedPreferences(this);
-			// String user = perfs.getString("userName", "");
-			String api = perfs.getString("api", "");
-
-			if (!api.equals("")) {
-
-				URL url = new URL("http://" + api + "/anime/" + String.valueOf(id) + "?format=xml");
-				InputSource in = new InputSource(new InputStreamReader(url.openStream()));
-
-				SAXParserFactory factory = SAXParserFactory.newInstance();
-				SAXParser parser = factory.newSAXParser();
-				MALHandler handeler = new MALHandler(db);
-				parser.parse(in, handeler);
-
-				fetchDone();
-			} else {
-				Log.e("MALManager", "user not configured");
-			}
-
-		} catch (Exception e) {
-			Log.e("MALManager", "Failed to pull", e);
-		}
 	}
 
 	private void schedule() {
@@ -356,51 +414,19 @@ public class MALManager extends IntentService {
 			AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
 			am.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, firstTime, interval, mAlarmSender);
 
-			Log.i("MALManager", "TIMER SET");
+			Log.e(LOG_NAME, "schedule set");
 		}
 	}
-
-	private void pullList(SQLiteDatabase db) {
-
-		NotificationManager mManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		Intent intent = new Intent(this, main.class);
-
-		PendingIntent pi = PendingIntent.getService(this, 0, intent, 0);
-
-		Notification notification = new Notification(R.drawable.icon, "Synchonizing", System.currentTimeMillis());
-		notification.setLatestEventInfo(this, "MAL for Android", "Pulling anime list from MAL", pi);
-
-		notification.flags |= Notification.FLAG_NO_CLEAR;
-		mManager.notify(0, notification);
-
-		try {
-			SharedPreferences perfs = PreferenceManager.getDefaultSharedPreferences(this);
-			String user = perfs.getString("userName", "");
-			String api = perfs.getString("api", "");
-
-			if (!api.equals("") && !user.equals("")) {
-
-				db.execSQL(getString(R.string.dirty));// all is dirt
-
-				URL url = new URL("http://" + api + "/animelist/" + user + "?format=xml");
-				InputSource in = new InputSource(new InputStreamReader(url.openStream()));
-
-				SAXParserFactory factory = SAXParserFactory.newInstance();
-				SAXParser parser = factory.newSAXParser();
-				MALHandler handeler = new MALHandler(db);
-				parser.parse(in, handeler);
-
-				db.execSQL(getString(R.string.clean));// remove the unclean ones
-
-				fetchDone();
-			} else {
-				Log.e("MALManager", "user not configured");
-			}
-
-		} catch (Exception e) {
-			Log.e("MALManager", "Failed to pull", e);
-		}
-
-		mManager.cancelAll();
+	
+	public static AnimeRecord getAnime( long id, Context c ){
+		
+		MALSqlHelper openHelper = new MALSqlHelper( c );
+		SQLiteDatabase db = openHelper.getReadableDatabase();
+		
+		AnimeRecord ar = new AnimeRecord( id, db );
+		
+		db.close();
+		return ar;
 	}
+
 }

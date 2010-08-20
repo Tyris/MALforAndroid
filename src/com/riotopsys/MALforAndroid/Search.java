@@ -82,13 +82,17 @@ public class Search extends Activity {
 	public boolean onContextItemSelected(MenuItem item) {
 
 		Intent i = new Intent(this, MALManager.class);
-		i.setAction("com.riotopsys.MALForAndroid.ADD");
+		i.setAction(MALManager.ADD);
 		Bundle b = new Bundle();
 		
 		AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
-	    String id = list.get( info.position ).get("id");
-	    
-	    b.putString("id", id);
+	    AnimeRecord ar = new AnimeRecord();
+	    ar.id = Long.parseLong(list.get( info.position ).get("id"));
+		
+		//String id = list.get( info.position ).get("id");
+		b.putSerializable("anime", ar);
+		
+	    //b.putString("id", id);
 		Log.d("stuff", String.valueOf(item.getItemId()) );
 
 		switch (item.getItemId()) {
