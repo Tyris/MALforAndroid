@@ -184,6 +184,7 @@ public class AnimeDetail extends Activity {
 
 		@Override
 		public void onReceive(Context arg0, Intent arg1) {
+			display();
 			/*
 			 * if (arg1.getAction().equals(
 			 * "com.riotopsys.MALForAndroid.DELETE_COMPLETE")) { finish(); }

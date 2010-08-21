@@ -90,28 +90,36 @@ public class Search extends Activity {
 	    ar.id = Long.parseLong(list.get( info.position ).get("id"));
 		
 		//String id = list.get( info.position ).get("id");
-		b.putSerializable("anime", ar);
+		
 		
 	    //b.putString("id", id);
 		Log.d("stuff", String.valueOf(item.getItemId()) );
 
 		switch (item.getItemId()) {
 			case R.id.addCompleted:
-				b.putString("status", "completed");
+				//b.putString("status", "completed");
+				ar.watchedStatus = "completed";
 				break;
 			case R.id.addDropped:
-				b.putString("status", "dropped");
+				//b.putString("status", "dropped");
+				ar.watchedStatus = "dropped";
 				break;
 			case R.id.addOnHold:
-				b.putString("status", "on-hold");
+				//b.putString("status", "on-hold");
+				ar.watchedStatus = "on-hold";
 				break;
 			case R.id.addPlantoWatch:
-				b.putString("status", "plan to watch");
+				//b.putString("status", "plan to watch");
+				ar.watchedStatus = "plan to watch";
 				break;
 			case R.id.addWatching:
-				b.putString("status", "watching");
+				//b.putString("status", "watching");
+				ar.watchedStatus = "watching";
 				break;
 		}
+		
+		b.putSerializable("anime", ar);
+		
 		i.putExtras(b);
 		startService(i);
 		finish();

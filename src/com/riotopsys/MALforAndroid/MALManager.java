@@ -17,6 +17,7 @@ import org.json.JSONObject;
 
 import android.app.AlarmManager;
 import android.app.IntentService;
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -29,6 +30,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
+import android.util.Base64;
 import android.util.Log;
 
 public class MALManager extends IntentService {
@@ -91,7 +93,14 @@ public class MALManager extends IntentService {
 		api = perfs.getString("api", "");
 		pass = perfs.getString("passwd", "");
 
-		cred = Base64.encodeBytes((user + ":" + pass).getBytes());
+		/*
+		 * String cred2; cred = android.util.Base64.encodeToString((user + ":" +
+		 * pass).getBytes(), android.util.Base64.DEFAULT |
+		 * android.util.Base64.NO_WRAP); cred2 = Base64.encodeBytes((user + ":"
+		 * + pass).getBytes());
+		 */
+
+		cred = Base64.encodeToString((user + ":" + pass).getBytes(), Base64.DEFAULT | Base64.NO_WRAP);
 
 		ConnectivityManager connect = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 		activeConnection = (connect.getNetworkInfo(0).isConnected() || connect.getNetworkInfo(1).isConnected());
@@ -102,6 +111,7 @@ public class MALManager extends IntentService {
 			push(db, ar);
 		} else if (s.equals(PULL)) {
 			pull(db, ar);
+			reloadSignal();
 		} else if (s.equals(SYNC)) {
 			sync(db);
 		} else if (s.equals(ADD)) {
@@ -137,7 +147,7 @@ public class MALManager extends IntentService {
 
 				// sb.append( "_method=PUT\n" );
 				sb.append("status=").append(ar.status);
-				sb.append("&").append("episodes=").append(String.valueOf(ar.episodes));
+				sb.append("&").append("episodes=").append(String.valueOf(ar.watchedEpisodes));
 				sb.append("&").append("score=").append(String.valueOf(ar.score));
 
 				OutputStreamWriter wr = new OutputStreamWriter(con.getOutputStream());
@@ -163,7 +173,7 @@ public class MALManager extends IntentService {
 				URL url;
 				try {
 					// http://mal-api.com/anime/53?format=xml&mine=1
-					url = new URL("http://" + api + "/anime/" + String.valueOf(id) + "&mine=1");
+					url = new URL("http://" + api + "/anime/" + String.valueOf(id) + "?mine=1");
 
 					HttpURLConnection con = (HttpURLConnection) url.openConnection();
 					con.setReadTimeout(10000);
@@ -198,6 +208,14 @@ public class MALManager extends IntentService {
 	private void sync(SQLiteDatabase db) {
 		if (activeConnection) {
 			NotificationManager mManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+			Intent intent = new Intent(this, main.class);
+			PendingIntent pi = PendingIntent.getService(this, 0, intent, 0);
+
+			Notification notification = new Notification(R.drawable.icon, "Synchonizing", System.currentTimeMillis());
+			notification.setLatestEventInfo(this, "MAL for Android", "Pulling anime list from MAL", pi);
+
+			notification.flags |= Notification.FLAG_NO_CLEAR;
+			mManager.notify(0, notification);
 
 			pushDirty(db);
 
@@ -206,7 +224,7 @@ public class MALManager extends IntentService {
 
 				db.execSQL(getString(R.string.dirty));// all is dirt
 
-				URL url = new URL("http://" + api + "/animelist/" + user + "?format=xml");
+				URL url = new URL("http://" + api + "/animelist/" + user);
 				// InputSource in = new InputSource(new
 				// InputStreamReader(url.openStream()));
 
@@ -218,11 +236,13 @@ public class MALManager extends IntentService {
 				}
 				rd.close();
 
-				JSONArray raw = new JSONArray(sb.toString());
-				for (int c = 0; c < raw.length(); c++) {
-					JSONObject jo = raw.getJSONObject(c);
-					ar.pullFromDB(jo.getInt("id"), db);
+				JSONObject raw = new JSONObject(sb.toString());
+				JSONArray array = raw.getJSONArray("anime");
+				for (int c = 0; c < array.length(); c++) {
+					JSONObject jo = array.getJSONObject(c);
+					ar.id = jo.getInt("id");
 					pull(db, ar);
+					Log.i(LOG_NAME, "Sync: " + String.valueOf(c) + "/" + String.valueOf(array.length()));
 				}
 
 				db.execSQL(getString(R.string.clean));// remove the unclean ones
@@ -250,8 +270,8 @@ public class MALManager extends IntentService {
 
 				// sb.append( "_method=PUT\n" );
 				StringBuffer sb = new StringBuffer();
-				sb.append("anime_id=").append(ar.id);
-				sb.append("&status=").append(ar.status);
+				sb.append("anime_id=").append(String.valueOf(ar.id));
+				sb.append("&status=").append(ar.watchedStatus);
 
 				OutputStreamWriter wr = new OutputStreamWriter(con.getOutputStream());
 
@@ -310,7 +330,7 @@ public class MALManager extends IntentService {
 				URLConnection ucon = url.openConnection();
 
 				File root = Environment.getExternalStorageDirectory();
-				File file = new File(root, "Android/data/com.riotopsys.MALForAndroid/images/" + String.valueOf(ar));
+				File file = new File(root, "Android/data/com.riotopsys.MALForAndroid/images/" + String.valueOf(ar.id));
 				file.mkdirs();
 				if (file.exists()) {
 					file.delete();
@@ -417,14 +437,14 @@ public class MALManager extends IntentService {
 			Log.e(LOG_NAME, "schedule set");
 		}
 	}
-	
-	public static AnimeRecord getAnime( long id, Context c ){
-		
-		MALSqlHelper openHelper = new MALSqlHelper( c );
+
+	public static AnimeRecord getAnime(long id, Context c) {
+
+		MALSqlHelper openHelper = new MALSqlHelper(c);
 		SQLiteDatabase db = openHelper.getReadableDatabase();
-		
-		AnimeRecord ar = new AnimeRecord( id, db );
-		
+
+		AnimeRecord ar = new AnimeRecord(id, db);
+
 		db.close();
 		return ar;
 	}

@@ -320,7 +320,7 @@ public class main extends Activity {
 			// Toast.LENGTH_LONG).show();
 			Intent i = new Intent(context, AnimeDetail.class);
 			Bundle b = new Bundle();
-			b.putLong("id", id);
+			b.putSerializable("anime", MALManager.getAnime(id, getBaseContext()));
 			i.putExtras(b);
 			startActivity(i);
 		}

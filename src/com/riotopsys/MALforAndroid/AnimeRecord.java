@@ -6,6 +6,7 @@ import org.json.JSONObject;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.text.Html;
 import android.util.Log;
 
 public class AnimeRecord implements Serializable {
@@ -42,20 +43,35 @@ public class AnimeRecord implements Serializable {
 	}
 
 	public AnimeRecord(JSONObject raw) {
-		try {
+		try {			
 			id = raw.getInt("id");
-			episodes = raw.getInt("episodes");
-			watchedEpisodes = raw.getInt("watched_episodes");
-			score = raw.getInt("score");
-
-			title = raw.getString("title");
-			type = raw.getString("type");
-			imageUrl = raw.getString("image_url");
-			status = raw.getString("status");
-			watchedStatus = raw.getString("watched_episodes");
-			memberScore = raw.getString("members_score");
-			rank = raw.getString("rank");
-			synopsis = raw.getString("synopsis");
+			
+			if ( raw.isNull("episodes") ){
+				episodes = 0;
+			} else {
+				episodes = raw.getInt("episodes");
+			}
+			
+			if ( raw.isNull("score") ){
+				score = 0;
+			} else {
+				score = raw.getInt("score");
+			}
+			
+			if ( raw.isNull("watched_episodes") ){
+				watchedEpisodes = 0;
+			} else {
+				watchedEpisodes = raw.getInt("watched_episodes");
+			}
+			
+			title = Html.fromHtml(raw.getString("title")).toString();
+			type = Html.fromHtml(raw.getString("type")).toString();
+			imageUrl = Html.fromHtml(raw.getString("image_url")).toString();
+			status = Html.fromHtml(raw.getString("status")).toString();
+			watchedStatus = Html.fromHtml(raw.getString("watched_status")).toString();
+			memberScore = Html.fromHtml(raw.getString("members_score")).toString();
+			rank = Html.fromHtml(raw.getString("rank")).toString();
+			synopsis = Html.fromHtml(raw.getString("synopsis")).toString();
 
 			dirty = CLEAN;
 		} catch (Exception e) {
@@ -123,7 +139,7 @@ public class AnimeRecord implements Serializable {
 		sb.append("dirty = ").append(String.valueOf(dirty)).append(", ");
 		sb.append("memberScore = ").append(addQuotes(memberScore)).append(", ");
 		sb.append("rank = ").append(addQuotes(rank)).append(", ");
-		sb.append("synopsis = ").append(addQuotes(synopsis)).append(", ");
+		sb.append("synopsis = ").append(addQuotes(synopsis));//.append(", ");
 
 		sb.append("where id = ").append(String.valueOf(id));
 
