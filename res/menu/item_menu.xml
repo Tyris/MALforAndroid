@@ -4,41 +4,40 @@ xmlns:android="http://schemas.android.com/apk/res/android">
 
 	<item
 	android:id="@+id/setWatched"
-	android:title="Set Last Watched"/>
+	android:title="@string/menuItemLastWatched"/>
 	
 	<item
 	android:id="@+id/setScore"
-	android:title="Set Score"/>
+	android:title="@string/menuItemScore"/>
 	
 	
 	<item
-	android:title="Change Status">
+	android:title="@string/menuItemStatus">
 		<menu>
     		<group
     		android:checkableBehavior="none">
         		
         		<item
 				android:id="@+id/itemStatusWatching"
-              	android:title="Watching" />
+              	android:title="@string/Watching" />
               	
               	<item
               	android:id="@+id/itemStatusCompleted"
-              	android:title="Completed" />
+              	android:title="@string/Completed" />
               	
               	<item
               	android:id="@+id/itemStatusOnHold"
-              	android:title="On Hold" />
+              	android:title="@string/OnHold" />
               	
               	<item
               	android:id="@+id/itemStatusDropped"
-              	android:title="Dropped" />
+              	android:title="@string/Dropped" />
               	
               	<item
               	android:id="@+id/itemStatusPlantoWatch"
-              	android:title="Plan to Watch" />
+              	android:title="@string/PlantoWatch" />
               	
     		</group>
 		</menu>
 	</item>
-	
 </menu>

@@ -12,7 +12,9 @@ import org.json.JSONObject;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -46,12 +48,12 @@ public class Search extends Activity {
 		text = (EditText) findViewById(R.id.textValue);
 		search = (Button) findViewById(R.id.search);
 
-		adapter = new SimpleAdapter(this, list, R.layout.search_item, new String[] { "title", "type", "synopsis", "episodes" }, new int[] { R.id.searchItemTitle,
-				R.id.searchItemType, R.id.searchItemSynopsys, R.id.searchItemEpisodes });
+		adapter = new SimpleAdapter(this, list, R.layout.search_item, new String[] { "title", "type", "synopsis", "episodes" }, new int[] {
+				R.id.searchItemTitle, R.id.searchItemType, R.id.searchItemSynopsys, R.id.searchItemEpisodes });
 		lv.setAdapter(adapter);
 
 		registerForContextMenu(lv);
-		
+
 		SearchListener sl = new SearchListener();
 		search.setOnClickListener(sl);
 		text.setOnClickListener(sl);
@@ -67,76 +69,67 @@ public class Search extends Activity {
 		});
 
 	}
-	
+
 	@Override
 	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
 		super.onCreateContextMenu(menu, v, menuInfo);
 		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.menu.search_item, menu);		
+		inflater.inflate(R.menu.search_item, menu);
 	}
-	
+
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
 
 		Intent i = new Intent(this, MALManager.class);
 		i.setAction(MALManager.ADD);
 		Bundle b = new Bundle();
-		
+
 		AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
-	    AnimeRecord ar = new AnimeRecord();
-	    ar.id = Long.parseLong(list.get( info.position ).get("id"));
-		
-		//String id = list.get( info.position ).get("id");
-		
-		
-	    //b.putString("id", id);
-		Log.d("stuff", String.valueOf(item.getItemId()) );
+		AnimeRecord ar = new AnimeRecord();
+		ar.id = Long.parseLong(list.get(info.position).get("id"));
+
+		Log.d("stuff", String.valueOf(item.getItemId()));
 
 		switch (item.getItemId()) {
 			case R.id.addCompleted:
-				//b.putString("status", "completed");
+				// b.putString("status", "completed");
 				ar.watchedStatus = "completed";
 				break;
 			case R.id.addDropped:
-				//b.putString("status", "dropped");
+				// b.putString("status", "dropped");
 				ar.watchedStatus = "dropped";
 				break;
 			case R.id.addOnHold:
-				//b.putString("status", "on-hold");
+				// b.putString("status", "on-hold");
 				ar.watchedStatus = "on-hold";
 				break;
 			case R.id.addPlantoWatch:
-				//b.putString("status", "plan to watch");
+				// b.putString("status", "plan to watch");
 				ar.watchedStatus = "plan to watch";
 				break;
 			case R.id.addWatching:
-				//b.putString("status", "watching");
+				// b.putString("status", "watching");
 				ar.watchedStatus = "watching";
 				break;
 		}
-		
+
 		b.putSerializable("anime", ar);
-		
+
 		i.putExtras(b);
 		startService(i);
 		finish();
 		return true;
 	}
-	
-	
-	
-	private void runSearch(){
+
+	private void runSearch() {
 		try {
 			list.clear();
 			adapter.notifyDataSetChanged();
-			URL url = new URL("http://mal-api.com/anime/search?q=" + URLEncoder.encode(text.getText().toString().trim(),"UTF-8"));
 
-			/*InputSource in = new InputSource(new InputStreamReader(url.openStream()));
+			SharedPreferences perfs = PreferenceManager.getDefaultSharedPreferences(this);
+			String api = perfs.getString("api", "");
 
-			SAXParserFactory factory = SAXParserFactory.newInstance();
-			SAXParser parser = factory.newSAXParser();
-
-			parser.parse(in, new SearchHandeler());*/
+			URL url = new URL("http://" + api + "/anime/search?q=" + URLEncoder.encode(text.getText().toString().trim(), "UTF-8"));
 			
 			BufferedReader rd = new BufferedReader(new InputStreamReader(url.openConnection().getInputStream()), 512);
 			String line;
@@ -145,22 +138,22 @@ public class Search extends Activity {
 				sb.append(line);
 			}
 			rd.close();
-			
+
 			JSONArray array = new JSONArray(sb.toString());
 			for (int c = 0; c < array.length(); c++) {
 				JSONObject jo = array.getJSONObject(c);
 				HashMap<String, String> item = new HashMap<String, String>();
-				
+
 				item.put("id", jo.getString("id"));
 				item.put("title", jo.getString("title"));
 				item.put("type", jo.getString("type"));
 				item.put("synopsis", jo.getString("synopsis"));
 				item.put("episodes", "Episodes: " + jo.getString("episodes"));
-				
+
 				list.add(item);
-				
+
 			}
-			
+
 			adapter.notifyDataSetChanged();
 
 		} catch (Exception e) {
@@ -177,46 +170,4 @@ public class Search extends Activity {
 
 	}
 
-	/*private class SearchHandeler extends DefaultHandler {
-		StringBuffer sb;
-		HashMap<String, String> item;
-
-		SearchHandeler() {
-			sb = new StringBuffer();
-			item = new HashMap<String, String>();
-		}
-
-		@Override
-		public void characters(char[] ch, int start, int length) throws SAXException {
-			super.characters(ch, start, length);
-			sb.append(new String(ch, start, length));
-		}
-
-		@Override
-		public void endElement(String uri, String localName, String name) throws SAXException {
-			super.endElement(uri, localName, name);
-			String s = sb.toString().trim();
-			if (localName != null) {
-				if (localName.equals("anime")) {
-
-					list.add(item);
-					adapter.notifyDataSetChanged();
-					// notes.notifyDataSetChanged();
-					item = null;
-					item = new HashMap<String, String>();
-
-				} else if (localName.equals("id")) {
-					item.put("id", s);
-				} else if (localName.equals("title")) {
-					item.put("title", s);
-				} else if (localName.equals("type")) {
-					item.put("type", s);
-				} else if (localName.equals("synopsis")) {
-					item.put("synopsis", s);
-				}
-
-				sb.delete(0, sb.length());
-			}
-		}
-	}*/
 }

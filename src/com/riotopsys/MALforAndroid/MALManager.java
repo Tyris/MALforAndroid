@@ -133,8 +133,8 @@ public class MALManager extends IntentService {
 
 				HttpURLConnection con = (HttpURLConnection) url.openConnection();
 				con.setDoOutput(true);
-				con.setReadTimeout(10000);
-				con.setConnectTimeout(15000);
+				con.setReadTimeout(getResources().getInteger(R.integer.readTimeout));
+				con.setConnectTimeout(getResources().getInteger(R.integer.connectTimeout));
 				con.setRequestMethod("PUT");
 				con.setRequestProperty("Authorization", "Basic " + cred);
 
@@ -169,8 +169,8 @@ public class MALManager extends IntentService {
 					url = new URL("http://" + api + "/anime/" + String.valueOf(id) + "?mine=1");
 
 					HttpURLConnection con = (HttpURLConnection) url.openConnection();
-					con.setReadTimeout(10000);
-					con.setConnectTimeout(15000);
+					con.setReadTimeout(getResources().getInteger(R.integer.readTimeout));
+					con.setConnectTimeout(getResources().getInteger(R.integer.connectTimeout));
 					con.setRequestProperty("Authorization", "Basic " + cred);
 
 					BufferedReader rd = new BufferedReader(new InputStreamReader(con.getInputStream()), 512);
@@ -272,8 +272,8 @@ public class MALManager extends IntentService {
 
 				HttpURLConnection con = (HttpURLConnection) url.openConnection();
 				con.setDoOutput(true);
-				con.setReadTimeout(10000);
-				con.setConnectTimeout(15000);
+				con.setReadTimeout(getResources().getInteger(R.integer.readTimeout));
+				con.setConnectTimeout(getResources().getInteger(R.integer.connectTimeout));
 				con.setRequestMethod("POST");
 				con.setRequestProperty("Authorization", "Basic " + cred);
 
@@ -308,8 +308,8 @@ public class MALManager extends IntentService {
 				URL url = new URL("http://" + api + "/animelist/anime/" + String.valueOf(ar.id));
 
 				HttpURLConnection con = (HttpURLConnection) url.openConnection();
-				con.setReadTimeout(10000 /* milliseconds */);
-				con.setConnectTimeout(15000 /* milliseconds */);
+				con.setReadTimeout(getResources().getInteger(R.integer.readTimeout));
+				con.setConnectTimeout(getResources().getInteger(R.integer.connectTimeout));
 				con.setRequestMethod("DELETE");
 				con.setRequestProperty("Authorization", "Basic " + cred);
 
@@ -402,8 +402,8 @@ public class MALManager extends IntentService {
 								url = new URL("http://" + api + "/animelist/anime/" + String.valueOf(ar.id));
 
 								con = (HttpURLConnection) url.openConnection();
-								con.setReadTimeout(10000 /* milliseconds */);
-								con.setConnectTimeout(15000 /* milliseconds */);
+								con.setReadTimeout(getResources().getInteger(R.integer.readTimeout));
+								con.setConnectTimeout(getResources().getInteger(R.integer.connectTimeout));
 								con.setRequestMethod("DELETE");
 								con.setRequestProperty("Authorization", "Basic " + cred);
 

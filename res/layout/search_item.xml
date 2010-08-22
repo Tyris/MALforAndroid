@@ -8,7 +8,6 @@ android:padding="8dip">
 	android:id="@+id/searchItemSynopsys"
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
-	android:text="synopsys"
 	android:layout_below="@+id/searchItemType"
 	android:layout_alignParentLeft="true"/>
 	
@@ -16,7 +15,6 @@ android:padding="8dip">
 	android:id="@+id/searchItemEpisodes"
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
-	android:text="Episodes"
 	android:layout_alignTop="@+id/searchItemType"
 	android:layout_alignParentRight="true"/>
 
@@ -24,7 +22,6 @@ android:padding="8dip">
 	android:id="@+id/searchItemType"
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
-	android:text="Type"
 	android:layout_below="@+id/searchItemTitle"
 	android:layout_alignParentLeft="true"/>
 
@@ -32,7 +29,6 @@ android:padding="8dip">
 	android:id="@+id/searchItemTitle"
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
-	android:text="Title"
 	android:layout_alignParentTop="true"
 	android:layout_alignParentLeft="true"/>
 

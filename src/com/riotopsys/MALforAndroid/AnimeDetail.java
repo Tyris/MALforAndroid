@@ -9,6 +9,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -71,20 +72,22 @@ public class AnimeDetail extends Activity {
 	}
 
 	private void display() {
+		
+		Resources res = getResources();
 
 		title.setText(ar.title);
 		progress.setText(String.valueOf(ar.watchedEpisodes) + " of " + String.valueOf(ar.episodes));
-		score.setText("Score: " + String.valueOf(ar.score));
+		score.setText( res.getString(R.string.detailScorePrefix) + String.valueOf(ar.score));
 		status.setText(ar.status);
 		type.setText(ar.type);
 		watchedStatus.setText(ar.watchedStatus);
 
-		memberScore.setText("Member Score: " + ar.memberScore);
-		rank.setText("Rank: " + ar.rank);
+		memberScore.setText( res.getString(R.string.detailScorePrefix) + ar.memberScore);
+		rank.setText( res.getString(R.string.detailRankPrefix) + ar.rank);
 		synopsis.setText(ar.synopsis);
 
 		File root = Environment.getExternalStorageDirectory();
-		File file = new File(root, "Android/data/com.riotopsys.MALForAndroid/images/" + String.valueOf(ar.id));
+		File file = new File(root, res.getString(R.string.imagePath) + String.valueOf(ar.id));
 		Intent i = new Intent(this, MALManager.class);
 		i.setAction(MALManager.IMAGE);
 		Bundle b = new Bundle();
@@ -132,7 +135,7 @@ public class AnimeDetail extends Activity {
 			case R.id.detailMenuDelete:
 				i.setAction(MALManager.REMOVE);
 				startService(i);
-				Toast.makeText(this, "Deleting Item...", Toast.LENGTH_SHORT).show();
+				Toast.makeText(this, R.string.deleting, Toast.LENGTH_SHORT).show();
 				finish();				
 				break;
 			case R.id.detailMenuSync:

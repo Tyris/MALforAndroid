@@ -108,9 +108,9 @@ public class main extends Activity {
 			Intent i = new Intent(this, Preferences.class);
 			startActivity(i);
 			if (perfs.getString("userName", "").equals("")) {
-				Toast.makeText(this, "Please setup your account", Toast.LENGTH_LONG).show();
+				Toast.makeText(this, R.string.accountSetup, Toast.LENGTH_LONG).show();
 			} else {
-				Toast.makeText(this, "Please setup MAL API", Toast.LENGTH_LONG).show();
+				Toast.makeText(this, R.string.apiSetup, Toast.LENGTH_LONG).show();
 			}
 		}
 	}
@@ -344,7 +344,7 @@ public class main extends Activity {
 		public void onSharedPreferenceChanged(SharedPreferences arg0, String key) {
 			if (key.equals("userName") || key.equals("passwd")) {
 				if (MALManager.verifyCredentials(getBaseContext())) {
-					Toast.makeText(getBaseContext(), "Loading your Anime list now.\nPlease be patient this first loading can be slow.", Toast.LENGTH_LONG).show();
+					Toast.makeText(getBaseContext(), R.string.firstSync, Toast.LENGTH_LONG*2).show();
 					Intent i = new Intent(getBaseContext(), MALManager.class);
 					i.setAction(MALManager.SYNC);
 					startService(i);

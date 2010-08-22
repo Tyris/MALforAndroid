@@ -8,7 +8,7 @@ android:layout_width="200dip">
   
   	<Button 
 	android:id="@+id/ButtonInc"
-	android:text="+" 
+	android:text="@string/intPickerInc" 
 	android:layout_height="wrap_content"
 	android:layout_width="fill_parent"/>
 		
@@ -22,14 +22,14 @@ android:layout_width="200dip">
 	
 	<Button 
 	android:id="@+id/ButtonDec"
-	android:text="-" 
+	android:text="@string/intPickerDec" 
 	android:layout_height="wrap_content"
 	android:layout_width="fill_parent"
 	/>
 	
 	<Button 
 	android:id="@+id/ButtonDone"
-	android:text="Cancel" 
+	android:text="@string/intPickerButton" 
 	android:layout_height="wrap_content"
 	android:layout_width="fill_parent"/>
   

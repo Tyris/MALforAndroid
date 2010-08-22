@@ -1,12 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="processId">managerProcess</string>
-    <string name="hello">Hello World, main!</string>
     <string name="app_name">MAL for Android</string>
     
     <string name="menuSort">Sort</string>
     <string name="menuSettings">Settings</string>
     <string name="menuSync">Sync Now</string>
+    
+    <string name="firstSync">"Loading your Anime list now.
+Please be patient this first loading can be slow."</string>
+
+	<string name="accountSetup">"Please setup your account"</string>
+    <string name="apiSetup">"Please setup MAL API"</string>
+    
+    <string name="detailScorePrefix">Score: </string>
+    <string name="detailMemberScorePrefix">Member Score: </string>
+    <string name="detailRankPrefix">Rank: </string>
+    <string name="imagePath">Android/data/com.riotopsys.MALForAndroid/images/</string>
+    <string name="deleting">Deleting Item...</string>
+    
+    <string name="prefAcctTitle">Account Settings</string>
+    
+    <string name="prefUserSummary">MAL User Name</string>
+    <string name="prefUserTitle">Username</string>
+    
+    <string name="prefPassSummary">MAL Password</string>
+    <string name="prefPassTitle">Password</string>
+    
+    <string name="prefAPISummary">Site of Unofficial MAL API Provider</string>
+    <string name="prefAPITitle">MAL API Site</string>
+    <string name="prefAPIDefault">mal-api.com</string>
+    
+    <string name="prefPresent">Presentation Options</string>
+    
+    <string name="prefViewTitle">Default View</string>
+    <string name="prefViewDefault">1</string>
+    
+    <string name="prefSortTitle">Default Sorting</string>
+    
+    <string name="prefUpdateCat">List Update Options</string>
+    
+    <string name="prefUpdateTitle">Update Frequency</string>
+    <string name="prefUpdateDefault">3600000</string>
+    
+    <string name="menuDetailReloadSyn">Reload Synopsys</string>
+    <string name="menuDetailDelete">Delete from list</string>
+    
+    <string name="menuItemLastWatched">Set Last Watched</string>
+    <string name="menuItemStatus">Change Status</string>
+    <string name="menuItemScore">Set Score</string>
+    
+    <string name="Watching">Watching</string>
+    <string name="Completed">Completed</string>
+    <string name="OnHold">On Hold</string>
+    <string name="Dropped">Dropped</string>
+    <string name="PlantoWatch">Plan to Watch</string>
+    
+    <string name="itemLayoutComp">Completed:</string>
+    <string name="itemLayoutDivider">/</string>
+    
+    
+    <string name="intPickerInc">+</string>
+    <string name="intPickerDec">-</string>
+    <string name="intPickerButton">Cancel</string>
     
     <string name="anime_table_def">
 CREATE TABLE if not exists `animeList` (

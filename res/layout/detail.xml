@@ -9,7 +9,6 @@ android:layout_height="fill_parent">
 	style="@android:style/TextAppearance.Medium"
 	android:layout_width="fill_parent"
 	android:layout_height="wrap_content"
-	android:text="Neon Genesis Evangelion: The End of Evangelion"
 	android:padding="2dip"	
 	android:layout_alignParentTop="true"
 	android:layout_alignParentLeft="true"/>
@@ -43,16 +42,14 @@ android:layout_height="fill_parent">
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:layout_alignParentTop="true"
-				android:layout_alignParentLeft="true"
-				android:text="Movie"/>
+				android:layout_alignParentLeft="true"/>
 		
 				<TextView
 				android:id="@+id/detailStatus"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:layout_alignParentTop="true"
-				android:layout_alignParentRight="true"			
-				android:text="finished airing"/>
+				android:layout_alignParentRight="true"/>
 			
 			</RelativeLayout>
 			
@@ -66,16 +63,14 @@ android:layout_height="fill_parent">
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:layout_alignParentTop="true"
-				android:layout_alignParentLeft="true"
-				android:text="completed"/>
+				android:layout_alignParentLeft="true"/>
 		
 				<TextView
 				android:id="@+id/detailProgress"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:layout_alignParentTop="true"
-				android:layout_alignParentRight="true"			
-				android:text="1 of 1"/>
+				android:layout_alignParentRight="true"/>
 			
 			</RelativeLayout>
 			
@@ -89,8 +84,7 @@ android:layout_height="fill_parent">
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:layout_alignParentTop="true"
-				android:layout_alignParentRight="true"
-				android:text="Score: 10"/>
+				android:layout_alignParentRight="true"/>
 			
 			</RelativeLayout>
 			
@@ -104,8 +98,7 @@ android:layout_height="fill_parent">
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:layout_alignParentTop="true"
-				android:layout_alignParentRight="true"			
-				android:text="Member Score: 8.3"/>				
+				android:layout_alignParentRight="true"/>				
 			
 			</RelativeLayout>
 		
@@ -119,8 +112,7 @@ android:layout_height="fill_parent">
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:layout_alignParentTop="true"
-				android:layout_alignParentRight="true"			
-				android:text="Rank #77"/>
+				android:layout_alignParentRight="true"/>
 			
 			</RelativeLayout>
 			
@@ -130,8 +122,7 @@ android:layout_height="fill_parent">
 	
 	<TextView
 	android:layout_height="wrap_content"
-	android:layout_width="wrap_content"
-	android:text="Synopsis"/>
+	android:layout_width="wrap_content"/>
 	
 	<ScrollView
 	android:layout_width="fill_parent"
@@ -140,9 +131,7 @@ android:layout_height="fill_parent">
 		<TextView
 		android:id="@+id/detailSynopsis"
 		android:layout_height="wrap_content"
-		android:layout_width="wrap_content"
-		android:text="NERV is being attacked by SEELE and Rei becomes one with Lillith.	Together with the Spear of Longinus and the completed EVA-series, Shinji will decide whether or not mankind will cease to exist. He has to decide now if he wants to stay alive or be dead, but his decision will affect all of humanity. Source: (ANN)
-		NERV is being attacked by SEELE and Rei becomes one with Lillith.	Together with the Spear of Longinus and the completed EVA-series, Shinji will decide whether or not mankind will cease to exist. He has to decide now if he wants to stay alive or be dead, but his decision will affect all of humanity. Source: (ANN)"/>
+		android:layout_width="wrap_content"/>
 			
 	</ScrollView>
 
