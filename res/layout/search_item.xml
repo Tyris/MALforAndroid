@@ -1,34 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
-android:id="@+id/widget28"
+xmlns:android="http://schemas.android.com/apk/res/android"
 android:layout_width="fill_parent"
 android:layout_height="fill_parent"
-android:padding="8dip"
-xmlns:android="http://schemas.android.com/apk/res/android">
-	<TextView 
+android:padding="8dip">
+	<TextView
 	android:id="@+id/searchItemSynopsys"
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
-	android:text="TextView"
-	android:layout_below="@+id/searchItemTitle"
-	android:layout_alignParentLeft="true">
-	</TextView>
+	android:text="synopsys"
+	android:layout_below="@+id/searchItemType"
+	android:layout_alignParentLeft="true"/>
+	
+	<TextView
+	android:id="@+id/searchItemEpisodes"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="Episodes"
+	android:layout_alignTop="@+id/searchItemType"
+	android:layout_alignParentRight="true"/>
+
 	<TextView
 	android:id="@+id/searchItemType"
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
 	android:text="Type"
-	android:layout_alignParentTop="true"
-	android:layout_alignParentRight="true">
-	</TextView>
+	android:layout_below="@+id/searchItemTitle"
+	android:layout_alignParentLeft="true"/>
+
 	<TextView
 	android:id="@+id/searchItemTitle"
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
 	android:text="Title"
 	android:layout_alignParentTop="true"
-	android:layout_alignParentLeft="true">
-	</TextView>
+	android:layout_alignParentLeft="true"/>
+
 </RelativeLayout>
-
-

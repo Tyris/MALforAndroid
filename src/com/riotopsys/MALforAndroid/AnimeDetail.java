@@ -9,8 +9,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -37,7 +35,8 @@ public class AnimeDetail extends Activity {
 	private TextView synopsis;
 	private IntentFilter intentFilter;
 
-	private long id;
+	// private long id;
+	private AnimeRecord ar;
 	private Reciever rec;
 
 	@Override
@@ -65,75 +64,51 @@ public class AnimeDetail extends Activity {
 
 		Bundle b = getIntent().getExtras();
 
-		id = ((AnimeRecord) b.getSerializable("anime")).id;
+		ar = (AnimeRecord) b.getSerializable("anime");
 
 		display();
 
 	}
 
 	private void display() {
-		MALSqlHelper openHelper = new MALSqlHelper(this.getBaseContext());
-		SQLiteDatabase db = openHelper.getReadableDatabase();
 
-		String s = "select * from animeList where id = " + String.valueOf(id);
+		title.setText(ar.title);
+		progress.setText(String.valueOf(ar.watchedEpisodes) + " of " + String.valueOf(ar.episodes));
+		score.setText("Score: " + String.valueOf(ar.score));
+		status.setText(ar.status);
+		type.setText(ar.type);
+		watchedStatus.setText(ar.watchedStatus);
 
-		Cursor c = db.rawQuery(s, null);
+		memberScore.setText("Member Score: " + ar.memberScore);
+		rank.setText("Rank: " + ar.rank);
+		synopsis.setText(ar.synopsis);
 
-		if (c != null) {
-			if (c.moveToFirst()) {
+		File root = Environment.getExternalStorageDirectory();
+		File file = new File(root, "Android/data/com.riotopsys.MALForAndroid/images/" + String.valueOf(ar.id));
+		Intent i = new Intent(this, MALManager.class);
+		i.setAction(MALManager.IMAGE);
+		Bundle b = new Bundle();
+		b.putSerializable("anime", ar);
+		i.putExtras(b);
 
-				title.setText(c.getString(1));
-				progress.setText(c.getString(6) + " of " + c.getString(4));
-				score.setText("Score: " + c.getString(7));
-				status.setText(c.getString(5));
-				type.setText(c.getString(2));
-				watchedStatus.setText(c.getString(8));
+		if (file.exists()) {
 
-				memberScore.setText("Member Score: " + c.getString(10));
-				rank.setText("Rank: " + c.getString(11));
-				synopsis.setText(new String(c.getBlob(12)));
-				/*
-				 * } else { memberScore.setText(""); rank.setText("");
-				 * synopsis.setText("");
-				 * 
-				 * Intent i = new Intent(this, MALManager.class);
-				 * i.setAction("com.riotopsys.MALForAndroid.FETCH_EXTRAS");
-				 * Bundle b = new Bundle(); b.putLong("id", id); i.putExtras(b);
-				 * startService(i); }
-				 */
-
-				File root = Environment.getExternalStorageDirectory();
-				File file = new File(root, "Android/data/com.riotopsys.MALForAndroid/images/" + String.valueOf(id));
-				Intent i = new Intent(this, MALManager.class);
-				i.setAction(MALManager.IMAGE);
-				Bundle b = new Bundle();
-				b.putSerializable("anime", MALManager.getAnime(id, this.getBaseContext()));
-				i.putExtras(b);
-
-				if (file.exists()) {
-
-					try {
-						FileInputStream fis = new FileInputStream(file);
-						Bitmap bmImg = BitmapFactory.decodeStream(fis);
-						if (bmImg != null) {
-							image.setImageBitmap(bmImg);
-						} else {
-							startService(i);
-						}
-					} catch (FileNotFoundException e) {
-						Log.e("AnimeDetail", "image error", e);
-					}
-
+			try {
+				FileInputStream fis = new FileInputStream(file);
+				Bitmap bmImg = BitmapFactory.decodeStream(fis);
+				if (bmImg != null) {
+					image.setImageBitmap(bmImg);
 				} else {
 					startService(i);
 				}
-
+			} catch (FileNotFoundException e) {
+				Log.e("AnimeDetail", "image error", e);
 			}
 
+		} else {
+			startService(i);
 		}
-		c.close();
 
-		db.close();
 	}
 
 	@Override
@@ -150,21 +125,21 @@ public class AnimeDetail extends Activity {
 		Intent i = new Intent(this, MALManager.class);
 		// i.setAction(MALManager.IMAGE);
 		Bundle b = new Bundle();
-		b.putSerializable("anime", MALManager.getAnime(id, this.getBaseContext()));
+		b.putSerializable("anime", ar);
 		i.putExtras(b);
 
 		switch (itemId) {
 			case R.id.detailMenuDelete:
 				i.setAction(MALManager.REMOVE);
-				// finish();
+				startService(i);
 				Toast.makeText(this, "Deleting Item...", Toast.LENGTH_SHORT).show();
+				finish();				
 				break;
 			case R.id.detailMenuSync:
 				i.setAction(MALManager.PULL);
+				startService(i);
 				break;
 		}
-
-		startService(i);
 		return true;
 	}
 
@@ -185,11 +160,6 @@ public class AnimeDetail extends Activity {
 		@Override
 		public void onReceive(Context arg0, Intent arg1) {
 			display();
-			/*
-			 * if (arg1.getAction().equals(
-			 * "com.riotopsys.MALForAndroid.DELETE_COMPLETE")) { finish(); }
-			 * else { display(); }
-			 */
 		}
 
 	}

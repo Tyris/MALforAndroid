@@ -30,6 +30,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
+import android.text.Html;
 import android.util.Base64;
 import android.util.Log;
 
@@ -93,13 +94,6 @@ public class MALManager extends IntentService {
 		api = perfs.getString("api", "");
 		pass = perfs.getString("passwd", "");
 
-		/*
-		 * String cred2; cred = android.util.Base64.encodeToString((user + ":" +
-		 * pass).getBytes(), android.util.Base64.DEFAULT |
-		 * android.util.Base64.NO_WRAP); cred2 = Base64.encodeBytes((user + ":"
-		 * + pass).getBytes());
-		 */
-
 		cred = Base64.encodeToString((user + ":" + pass).getBytes(), Base64.DEFAULT | Base64.NO_WRAP);
 
 		ConnectivityManager connect = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -111,7 +105,6 @@ public class MALManager extends IntentService {
 			push(db, ar);
 		} else if (s.equals(PULL)) {
 			pull(db, ar);
-			reloadSignal();
 		} else if (s.equals(SYNC)) {
 			sync(db);
 		} else if (s.equals(ADD)) {
@@ -146,7 +139,7 @@ public class MALManager extends IntentService {
 				con.setRequestProperty("Authorization", "Basic " + cred);
 
 				// sb.append( "_method=PUT\n" );
-				sb.append("status=").append(ar.status);
+				sb.append("status=").append(ar.watchedStatus);
 				sb.append("&").append("episodes=").append(String.valueOf(ar.watchedEpisodes));
 				sb.append("&").append("score=").append(String.valueOf(ar.score));
 
@@ -215,6 +208,7 @@ public class MALManager extends IntentService {
 			notification.setLatestEventInfo(this, "MAL for Android", "Pulling anime list from MAL", pi);
 
 			notification.flags |= Notification.FLAG_NO_CLEAR;
+
 			mManager.notify(0, notification);
 
 			pushDirty(db);
@@ -240,9 +234,24 @@ public class MALManager extends IntentService {
 				JSONArray array = raw.getJSONArray("anime");
 				for (int c = 0; c < array.length(); c++) {
 					JSONObject jo = array.getJSONObject(c);
-					ar.id = jo.getInt("id");
-					pull(db, ar);
-					Log.i(LOG_NAME, "Sync: " + String.valueOf(c) + "/" + String.valueOf(array.length()));
+
+					notification.setLatestEventInfo(this, "MAL for Android: " + String.valueOf(c + 1) + "/" + String.valueOf(array.length()),
+							Html.fromHtml(jo.getString("title")).toString(), pi);
+					mManager.notify(0, notification);
+				
+					try {
+						ar.pullFromDB(jo.getInt("id"), db);
+						ar.dirty = AnimeRecord.CLEAN;
+						ar.watchedStatus = jo.getString("watched_status");
+						ar.score = jo.getInt("score");
+						ar.watchedEpisodes = jo.getInt("watched_episodes");
+						ar.pushToDB(db);
+						reloadSignal();
+					} catch ( Exception e ){
+						ar.id = jo.getInt("id");
+						pull(db, ar);
+					}
+
 				}
 
 				db.execSQL(getString(R.string.clean));// remove the unclean ones
@@ -292,6 +301,7 @@ public class MALManager extends IntentService {
 
 	private void remove(SQLiteDatabase db, AnimeRecord ar) {
 		ar.dirty = AnimeRecord.DELETED;
+		ar.pushToDB(db);
 		reloadSignal();
 		if (activeConnection) {
 			try {
@@ -317,10 +327,10 @@ public class MALManager extends IntentService {
 	private void change(SQLiteDatabase db, AnimeRecord ar) {
 		ar.dirty = AnimeRecord.UNSYNCED;
 		ar.pushToDB(db);
-		reloadSignal();
 		if (activeConnection) {
 			push(db, ar);
 		}
+		reloadSignal();
 	}
 
 	private void pullImage(SQLiteDatabase db, AnimeRecord ar) {
@@ -341,7 +351,7 @@ public class MALManager extends IntentService {
 
 				InputStream is = ucon.getInputStream();
 
-				BufferedInputStream bis = new BufferedInputStream(is);
+				BufferedInputStream bis = new BufferedInputStream(is, 1024 * 10);
 
 				int current = 0;
 
@@ -371,43 +381,47 @@ public class MALManager extends IntentService {
 		if (c.moveToFirst()) {
 			while (!c.isAfterLast()) {
 
-				AnimeRecord ar = new AnimeRecord(c.getInt(c.getColumnIndex("id")), db);
+				try {
+					AnimeRecord ar = new AnimeRecord(c.getInt(c.getColumnIndex("id")), db);
 
-				switch (ar.dirty) {
-					case AnimeRecord.CLEAN:
-						Log.e(LOG_NAME, "WTF i said no 0");
-						break;
-					case AnimeRecord.UPDATING:
-						// only seen during an update
-						break;
-					case AnimeRecord.UNSYNCED:
-						// just a change
-						push(db, ar);
-						break;
-					case AnimeRecord.DELETED:
-						// delete
-						try {
+					switch (ar.dirty) {
+						case AnimeRecord.CLEAN:
+							Log.e(LOG_NAME, "WTF i said no 0");
+							break;
+						case AnimeRecord.UPDATING:
+							// only seen during an update
+							break;
+						case AnimeRecord.UNSYNCED:
+							// just a change
+							push(db, ar);
+							break;
+						case AnimeRecord.DELETED:
+							// delete
+							try {
 
-							url = new URL("http://" + api + "/animelist/anime/" + String.valueOf(ar.id));
+								url = new URL("http://" + api + "/animelist/anime/" + String.valueOf(ar.id));
 
-							con = (HttpURLConnection) url.openConnection();
-							con.setReadTimeout(10000 /* milliseconds */);
-							con.setConnectTimeout(15000 /* milliseconds */);
-							con.setRequestMethod("DELETE");
-							con.setRequestProperty("Authorization", "Basic " + cred);
+								con = (HttpURLConnection) url.openConnection();
+								con.setReadTimeout(10000 /* milliseconds */);
+								con.setConnectTimeout(15000 /* milliseconds */);
+								con.setRequestMethod("DELETE");
+								con.setRequestProperty("Authorization", "Basic " + cred);
 
-							con.connect();
+								con.connect();
 
-							if (con.getResponseCode() == 200) {
-								db.execSQL("delete from animeList where id = " + String.valueOf(ar.id));
+								if (con.getResponseCode() == 200) {
+									db.execSQL("delete from animeList where id = " + String.valueOf(ar.id));
+								}
+
+							} catch (Exception e) {
+								Log.e(LOG_NAME, "push dirty", e);
 							}
-
-						} catch (Exception e) {
-							Log.e(LOG_NAME, "push dirty", e);
-						}
-						break;
+							break;
+					}
+					c.moveToNext();
+				} catch (Exception e) {
+					Log.e(LOG_NAME, "push dirty: ar not found", e);
 				}
-				c.moveToNext();
 			}
 		}
 		c.close();
@@ -434,7 +448,7 @@ public class MALManager extends IntentService {
 			AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
 			am.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, firstTime, interval, mAlarmSender);
 
-			Log.e(LOG_NAME, "schedule set");
+			Log.i(LOG_NAME, "schedule set");
 		}
 	}
 
@@ -443,10 +457,45 @@ public class MALManager extends IntentService {
 		MALSqlHelper openHelper = new MALSqlHelper(c);
 		SQLiteDatabase db = openHelper.getReadableDatabase();
 
-		AnimeRecord ar = new AnimeRecord(id, db);
+		AnimeRecord ar;
+		try {
+			ar = new AnimeRecord(id, db);
+		} catch (Exception e) {
+			ar = null;
+		}
 
 		db.close();
 		return ar;
+	}
+
+	public static boolean verifyCredentials(Context c) {
+		SharedPreferences perfs = PreferenceManager.getDefaultSharedPreferences(c);
+		String user = perfs.getString("userName", "");
+		String api = perfs.getString("api", "");
+		String pass = perfs.getString("passwd", "");
+
+		String cred = Base64.encodeToString((user + ":" + pass).getBytes(), Base64.DEFAULT | Base64.NO_WRAP);
+
+		Boolean result = false;
+
+		try {
+			URL url = new URL("http://" + api + "/account/verify_credentials");
+
+			HttpURLConnection con = (HttpURLConnection) url.openConnection();
+			con.setReadTimeout(10000 /* milliseconds */);
+			con.setConnectTimeout(15000 /* milliseconds */);
+			con.setRequestProperty("Authorization", "Basic " + cred);
+
+			con.connect();
+
+			result = (con.getResponseCode() == 200);
+
+		} catch (Exception e) {
+			Log.e(LOG_NAME, "verifyCredentials", e);
+		}
+
+		return result;
+
 	}
 
 }

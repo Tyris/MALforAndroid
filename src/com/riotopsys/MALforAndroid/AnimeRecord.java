@@ -38,7 +38,7 @@ public class AnimeRecord implements Serializable {
 		dirty = UNSYNCED;
 	}
 
-	public AnimeRecord(long id2, SQLiteDatabase db) {
+	public AnimeRecord(long id2, SQLiteDatabase db) throws Exception{
 		pullFromDB(id2, db);
 	}
 
@@ -80,7 +80,8 @@ public class AnimeRecord implements Serializable {
 	}
 
 	// loads fields from table
-	public void pullFromDB(long id, SQLiteDatabase db) {
+	public void pullFromDB(long id, SQLiteDatabase db) throws Exception {
+		
 		Cursor c = db.rawQuery("select * from animeList where id = " + String.valueOf(id), null);
 		if (c.moveToFirst()) {
 			// c.getInt(c.getColumnIndex("watchedEpisodes"))
@@ -99,10 +100,11 @@ public class AnimeRecord implements Serializable {
 			synopsis = c.getString(c.getColumnIndex("synopsis"));
 
 			dirty = c.getInt(c.getColumnIndex("dirty"));
+			c.close();
 		} else {
-			Log.e(LOG_NAME, "no record");
+			c.close();
+			throw new Exception( "item not found" );
 		}
-		c.close();
 	}
 
 	public void pushToDB(SQLiteDatabase db) {
@@ -119,10 +121,20 @@ public class AnimeRecord implements Serializable {
 	}
 
 	private String insertStatement() {
-		return "insert into `animeList` values (" + String.valueOf(id) + ", " + addQuotes(title) + ", " + addQuotes(type) + ", " + addQuotes(imageUrl) + ", "
-				+ String.valueOf(episodes) + ", " + addQuotes(status) + ", " + String.valueOf(watchedEpisodes) + ", " + String.valueOf(score) + ", "
-				+ addQuotes(watchedStatus) + ", " + String.valueOf(dirty) + ", " + addQuotes(memberScore) + ", " + addQuotes(rank) + ", " + addQuotes(synopsis)
-				+ " )";
+		return "replace into `animeList` values (" + 
+			String.valueOf(id) + ", " + 
+			addQuotes(title) + ", " + 
+			addQuotes(type) + ", " + 
+			addQuotes(imageUrl) + ", " + 
+			String.valueOf(episodes) + ", " + 
+			addQuotes(status) + ", " + 
+			String.valueOf(watchedEpisodes) + ", " + 
+			String.valueOf(score) + ", " + 
+			addQuotes(watchedStatus) + ", " + 
+			String.valueOf(dirty) + ", " + 
+			addQuotes(memberScore) + ", " + 
+			addQuotes(rank) + ", " +
+			addQuotes(synopsis) + " )";
 	}
 
 	private String updateStatement() {

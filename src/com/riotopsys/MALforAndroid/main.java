@@ -5,10 +5,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnDismissListener;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -33,6 +33,8 @@ import android.widget.Toast;
 
 public class main extends Activity {
 
+	private final static String LOG_NAME = "MAL Main";
+	
 	private ListView lv;
 	private SQLiteDatabase db;
 	private SimpleCursorAdapter adapter;
@@ -43,8 +45,9 @@ public class main extends Activity {
 
 	private IntegerPicker ipWatched;
 	private IntegerPicker ipScore;
-	private main self;
 	private AnimeRecord LongClickRecord;
+
+	private PerfChange pfChang;
 
 	// private MALAdapter adapter;
 
@@ -55,8 +58,6 @@ public class main extends Activity {
 		setContentView(R.layout.main);
 
 		lv = (ListView) findViewById(R.id.lv);
-
-		self = this;
 
 		Spinner spinner = (Spinner) findViewById(R.id.spinner);
 		ArrayAdapter<CharSequence> spinnnerAdapter = ArrayAdapter.createFromResource(this, R.array.filterArray, android.R.layout.simple_spinner_item);
@@ -74,7 +75,8 @@ public class main extends Activity {
 
 		PreferenceManager.setDefaultValues(this, R.xml.preferances, false);
 		SharedPreferences perfs = PreferenceManager.getDefaultSharedPreferences(this);
-		perfs.registerOnSharedPreferenceChangeListener(new PerfChange());
+		pfChang = new PerfChange();
+		perfs.registerOnSharedPreferenceChangeListener(pfChang);
 
 		if (savedInstanceState != null) {
 			sort = savedInstanceState.getString("sort");
@@ -95,48 +97,12 @@ public class main extends Activity {
 
 		ipWatched = new IntegerPicker(this);
 		ipWatched.setTitle("Episodes Watched");
-		ipWatched.setOnDismissListener(new OnDismissListener() {
-			@Override
-			public void onDismiss(DialogInterface dialog) {
-				// Log.i("watched", String.valueOf(ipWatched.wasCanceled()) +
-				// " " + String.valueOf(ipWatched.getCurrent()));
-				if (!ipWatched.wasCanceled()) {
-
-					Intent i = new Intent(self, MALManager.class);
-					i.setAction(MALManager.CHANGE);
-					Bundle b = new Bundle();
-					LongClickRecord.watchedEpisodes = ipWatched.getCurrent();
-					b.putSerializable("anime", LongClickRecord);
-
-					i.putExtras(b);
-					startService(i);
-
-				}
-			}
-		});
+		ipWatched.setOnDismissListener( new WatchDismissed() );
 
 		ipScore = new IntegerPicker(this);
 		ipScore.setTitle("Set Score");
 		ipScore.setLimits(0, 10);
-		ipScore.setOnDismissListener(new OnDismissListener() {
-			@Override
-			public void onDismiss(DialogInterface dialog) {
-				// Log.i("watched", String.valueOf(ipScore.wasCanceled()) + " "
-				// + String.valueOf(ipScore.getCurrent()));
-				if (!ipScore.wasCanceled()) {
-
-					Intent i = new Intent(self, MALManager.class);
-					i.setAction(MALManager.CHANGE);
-					Bundle b = new Bundle();
-					LongClickRecord.score = ipScore.getCurrent();
-					b.putSerializable("anime", LongClickRecord);
-
-					i.putExtras(b);
-					startService(i);
-					
-				}
-			}
-		});
+		ipScore.setOnDismissListener(new ScoreDismissed() );
 
 		if (perfs.getString("userName", "").equals("") || perfs.getString("api", "").equals("")) {
 			Intent i = new Intent(this, Preferences.class);
@@ -165,23 +131,23 @@ public class main extends Activity {
 
 		switch (item.getItemId()) {
 			case R.id.itemStatusCompleted:
-				LongClickRecord.status = "completed";
+				LongClickRecord.watchedStatus = "completed";
 				postIntent = true;
 				break;
 			case R.id.itemStatusDropped:
-				LongClickRecord.status = "dropped";
+				LongClickRecord.watchedStatus= "dropped";
 				postIntent = true;
 				break;
 			case R.id.itemStatusOnHold:
-				LongClickRecord.status = "on-hold";
+				LongClickRecord.watchedStatus= "on-hold";
 				postIntent = true;
 				break;
 			case R.id.itemStatusPlantoWatch:
-				LongClickRecord.status = "plan to watch";
+				LongClickRecord.watchedStatus = "plan to watch";
 				postIntent = true;
 				break;
 			case R.id.itemStatusWatching:
-				LongClickRecord.status = "watching";
+				LongClickRecord.watchedStatus = "watching";
 				postIntent = true;
 				break;
 			case R.id.setWatched:
@@ -225,15 +191,15 @@ public class main extends Activity {
 
 	@Override
 	public void onPause() {
-		unregisterReceiver(rec);
+		//unregisterReceiver(rec);
 		// adapter.getCursor().close();
 		super.onPause();
 	}
 
 	@Override
 	public void onResume() {
-		setFilter(lastChoice);
-		registerReceiver(rec, intentFilter);
+		//setFilter(lastChoice);
+		//registerReceiver(rec, intentFilter);
 		super.onPause();
 	}
 
@@ -331,18 +297,62 @@ public class main extends Activity {
 
 		@Override
 		public void onReceive(Context arg0, Intent arg1) {
+			Log.i(LOG_NAME, arg1.getAction());
 			setFilter(lastChoice);
 		}
 
 	}
+	
+	private class WatchDismissed implements OnDismissListener {
+		@Override
+		public void onDismiss(DialogInterface dialog) {
+			if (!ipWatched.wasCanceled()) {
 
+				Intent i = new Intent(getBaseContext(), MALManager.class);
+				i.setAction(MALManager.CHANGE);
+				Bundle b = new Bundle();
+				LongClickRecord.watchedEpisodes = ipWatched.getCurrent();
+				b.putSerializable("anime", LongClickRecord);
+
+				i.putExtras(b);
+				startService(i);
+
+			}
+		}
+	}
+	
+	private class ScoreDismissed implements OnDismissListener {
+		@Override
+		public void onDismiss(DialogInterface dialog) {
+			if (!ipScore.wasCanceled()) {
+
+				Intent i = new Intent(getBaseContext(), MALManager.class);
+				i.setAction(MALManager.CHANGE);
+				Bundle b = new Bundle();
+				LongClickRecord.score = ipScore.getCurrent();
+				b.putSerializable("anime", LongClickRecord);
+
+				i.putExtras(b);
+				startService(i);
+				
+			}
+		}
+	}
+	
 	private class PerfChange implements OnSharedPreferenceChangeListener {
 		@Override
 		public void onSharedPreferenceChanged(SharedPreferences arg0, String key) {
 			if (key.equals("userName") || key.equals("passwd")) {
-				Intent i = new Intent(self, MALManager.class);
-				i.setAction(MALManager.SYNC);
-				startService(i);
+				if (MALManager.verifyCredentials(getBaseContext())) {
+					Toast.makeText(getBaseContext(), "Loading your Anime list now.\nPlease be patient this first loading can be slow.", Toast.LENGTH_LONG).show();
+					Intent i = new Intent(getBaseContext(), MALManager.class);
+					i.setAction(MALManager.SYNC);
+					startService(i);
+				} else{
+					Log.i(LOG_NAME, "verifyCredentials: failed");
+				}
+			} else {
+				Log.i(LOG_NAME, "Credentials changed");
 			}
 		}
 	}

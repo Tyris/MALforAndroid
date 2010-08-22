@@ -1,17 +1,14 @@
 package com.riotopsys.MALforAndroid;
 
+import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -49,8 +46,8 @@ public class Search extends Activity {
 		text = (EditText) findViewById(R.id.textValue);
 		search = (Button) findViewById(R.id.search);
 
-		adapter = new SimpleAdapter(this, list, R.layout.search_item, new String[] { "title", "type", "synopsis" }, new int[] { R.id.searchItemTitle,
-				R.id.searchItemType, R.id.searchItemSynopsys });
+		adapter = new SimpleAdapter(this, list, R.layout.search_item, new String[] { "title", "type", "synopsis", "episodes" }, new int[] { R.id.searchItemTitle,
+				R.id.searchItemType, R.id.searchItemSynopsys, R.id.searchItemEpisodes });
 		lv.setAdapter(adapter);
 
 		registerForContextMenu(lv);
@@ -132,14 +129,38 @@ public class Search extends Activity {
 		try {
 			list.clear();
 			adapter.notifyDataSetChanged();
-			URL url = new URL("http://mal-api.com/anime/search?format=xml&q=" + URLEncoder.encode(text.getText().toString().trim(),"UTF-8"));
+			URL url = new URL("http://mal-api.com/anime/search?q=" + URLEncoder.encode(text.getText().toString().trim(),"UTF-8"));
 
-			InputSource in = new InputSource(new InputStreamReader(url.openStream()));
+			/*InputSource in = new InputSource(new InputStreamReader(url.openStream()));
 
 			SAXParserFactory factory = SAXParserFactory.newInstance();
 			SAXParser parser = factory.newSAXParser();
 
-			parser.parse(in, new SearchHandeler());
+			parser.parse(in, new SearchHandeler());*/
+			
+			BufferedReader rd = new BufferedReader(new InputStreamReader(url.openConnection().getInputStream()), 512);
+			String line;
+			StringBuffer sb = new StringBuffer();
+			while ((line = rd.readLine()) != null) {
+				sb.append(line);
+			}
+			rd.close();
+			
+			JSONArray array = new JSONArray(sb.toString());
+			for (int c = 0; c < array.length(); c++) {
+				JSONObject jo = array.getJSONObject(c);
+				HashMap<String, String> item = new HashMap<String, String>();
+				
+				item.put("id", jo.getString("id"));
+				item.put("title", jo.getString("title"));
+				item.put("type", jo.getString("type"));
+				item.put("synopsis", jo.getString("synopsis"));
+				item.put("episodes", "Episodes: " + jo.getString("episodes"));
+				
+				list.add(item);
+				
+			}
+			
 			adapter.notifyDataSetChanged();
 
 		} catch (Exception e) {
@@ -156,7 +177,7 @@ public class Search extends Activity {
 
 	}
 
-	private class SearchHandeler extends DefaultHandler {
+	/*private class SearchHandeler extends DefaultHandler {
 		StringBuffer sb;
 		HashMap<String, String> item;
 
@@ -197,5 +218,5 @@ public class Search extends Activity {
 				sb.delete(0, sb.length());
 			}
 		}
-	}
+	}*/
 }
