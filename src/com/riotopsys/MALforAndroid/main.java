@@ -168,6 +168,14 @@ public class main extends Activity {
 				ipScore.show();
 
 				break;
+			case R.id.menuItemDelete:
+				Intent i = new Intent(this, MALManager.class);
+				i.setAction(MALManager.REMOVE);
+				Bundle b = new Bundle();
+				b.putSerializable("anime", LongClickRecord);
+				i.putExtras(b);
+				startService(i);
+				break;
 		}
 
 		if (postIntent) {

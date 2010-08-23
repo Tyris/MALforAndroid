@@ -125,21 +125,34 @@ public class AnimeDetail extends Activity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		int itemId = item.getItemId();
 
-		Intent i = new Intent(this, MALManager.class);
-		// i.setAction(MALManager.IMAGE);
-		Bundle b = new Bundle();
-		b.putSerializable("anime", ar);
-		i.putExtras(b);
-
+		Intent i;
+		Bundle b;
+		
 		switch (itemId) {
 			case R.id.detailMenuDelete:
+				i = new Intent(this, MALManager.class);
+				b = new Bundle();
+				b.putSerializable("anime", ar);
+				i.putExtras(b);
 				i.setAction(MALManager.REMOVE);
 				startService(i);
+		
 				Toast.makeText(this, R.string.deleting, Toast.LENGTH_SHORT).show();
 				finish();				
 				break;
 			case R.id.detailMenuSync:
+				i = new Intent(this, MALManager.class);
+				b = new Bundle();
+				b.putSerializable("anime", ar);
+				i.putExtras(b);
 				i.setAction(MALManager.PULL);
+				startService(i);
+				
+				i = new Intent(this, MALManager.class);
+				b = new Bundle();
+				b.putSerializable("anime", ar);
+				i.putExtras(b);
+				i.setAction(MALManager.IMAGE);
 				startService(i);
 				break;
 		}

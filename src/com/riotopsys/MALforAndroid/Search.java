@@ -18,13 +18,13 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
-import android.view.KeyEvent;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.View.OnKeyListener;
+import android.widget.AdapterView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -53,21 +53,17 @@ public class Search extends Activity {
 		lv.setAdapter(adapter);
 
 		registerForContextMenu(lv);
-
-		SearchListener sl = new SearchListener();
-		search.setOnClickListener(sl);
-		text.setOnClickListener(sl);
-
-		text.setOnKeyListener(new OnKeyListener() {
-			public boolean onKey(View v, int keyCode, KeyEvent event) {
-				if ((event.getAction() == KeyEvent.ACTION_DOWN) && (keyCode == KeyEvent.KEYCODE_ENTER)) {
-					runSearch();
-					return true;
-				}
-				return false;
+		
+		lv.setOnItemClickListener( new OnItemClickListener(){
+			@Override
+			public void onItemClick(AdapterView<?> arg0, View v, int arg2, long arg3) {
+				v.showContextMenu();
 			}
 		});
 
+		SearchListener sl = new SearchListener();
+		search.setOnClickListener(sl);
+		
 	}
 
 	@Override
@@ -87,8 +83,6 @@ public class Search extends Activity {
 		AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
 		AnimeRecord ar = new AnimeRecord();
 		ar.id = Long.parseLong(list.get(info.position).get("id"));
-
-		Log.d("stuff", String.valueOf(item.getItemId()));
 
 		switch (item.getItemId()) {
 			case R.id.addCompleted:

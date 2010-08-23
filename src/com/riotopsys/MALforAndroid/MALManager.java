@@ -266,6 +266,7 @@ public class MALManager extends IntentService {
 	}
 
 	private void add(SQLiteDatabase db, AnimeRecord ar) {
+		String ws = ar.watchedStatus;
 		if (activeConnection) {
 			try {
 				URL url = new URL("http://" + api + "/animelist/anime");
@@ -291,6 +292,10 @@ public class MALManager extends IntentService {
 				int fred = con.getResponseCode();
 				if (fred == 200) {
 					pull(db, ar);
+					ar.pullFromDB(ar.id, db);
+					ar.watchedStatus = ws;
+					ar.pushToDB(db);
+					reloadSignal();
 				}
 
 			} catch (Exception e) {

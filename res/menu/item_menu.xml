@@ -40,4 +40,9 @@ xmlns:android="http://schemas.android.com/apk/res/android">
     		</group>
 		</menu>
 	</item>
+	
+	<item
+	android:id="@+id/menuItemDelete"
+	android:title="@string/menuDetailDelete"/>
+	
 </menu>
