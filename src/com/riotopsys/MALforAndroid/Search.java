@@ -29,6 +29,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
+import android.widget.Toast;
 
 public class Search extends Activity {
 
@@ -151,6 +152,7 @@ public class Search extends Activity {
 			adapter.notifyDataSetChanged();
 
 		} catch (Exception e) {
+			Toast.makeText(this, R.string.connectError, Toast.LENGTH_SHORT).show();
 			Log.i("Search", "SearchListener", e);
 		}
 	}

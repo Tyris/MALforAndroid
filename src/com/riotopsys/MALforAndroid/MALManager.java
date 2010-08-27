@@ -33,6 +33,7 @@ import android.preference.PreferenceManager;
 import android.text.Html;
 import android.util.Base64;
 import android.util.Log;
+import android.widget.Toast;
 
 public class MALManager extends IntentService {
 
@@ -154,6 +155,7 @@ public class MALManager extends IntentService {
 					ar.pushToDB(db);
 				}
 			} catch (Exception e) {
+				errorNotification();
 				Log.e(LOG_NAME, "push", e);
 			}
 		}
@@ -190,6 +192,7 @@ public class MALManager extends IntentService {
 
 					// int fred = con.getResponseCode();
 				} catch (Exception e) {
+					errorNotification();
 					Log.e(LOG_NAME, "push", e);
 				}
 			} else {
@@ -238,7 +241,7 @@ public class MALManager extends IntentService {
 					notification.setLatestEventInfo(this, "MAL for Android: " + String.valueOf(c + 1) + "/" + String.valueOf(array.length()),
 							Html.fromHtml(jo.getString("title")).toString(), pi);
 					mManager.notify(0, notification);
-				
+
 					try {
 						ar.pullFromDB(jo.getInt("id"), db);
 						ar.dirty = AnimeRecord.CLEAN;
@@ -247,7 +250,7 @@ public class MALManager extends IntentService {
 						ar.watchedEpisodes = jo.getInt("watched_episodes");
 						ar.pushToDB(db);
 						reloadSignal();
-					} catch ( Exception e ){
+					} catch (Exception e) {
 						ar.id = jo.getInt("id");
 						pull(db, ar);
 					}
@@ -257,6 +260,7 @@ public class MALManager extends IntentService {
 				db.execSQL(getString(R.string.clean));// remove the unclean ones
 
 			} catch (Exception e) {
+				errorNotification();
 				Log.e(LOG_NAME, "Sync failed", e);
 			}
 
@@ -299,6 +303,7 @@ public class MALManager extends IntentService {
 				}
 
 			} catch (Exception e) {
+				errorNotification();
 				Log.e(LOG_NAME, "add", e);
 			}
 		}
@@ -324,6 +329,7 @@ public class MALManager extends IntentService {
 					db.execSQL("delete from animeList where id = " + String.valueOf(ar.id));
 				}
 			} catch (Exception e) {
+				errorNotification();
 				Log.e(LOG_NAME, "remove", e);
 			}
 		}
@@ -372,6 +378,7 @@ public class MALManager extends IntentService {
 				fos.close();
 				reloadSignal();
 			} catch (Exception e) {
+				errorNotification();
 				Log.e(LOG_NAME, "Failed on img", e);
 			}
 		}
@@ -419,6 +426,7 @@ public class MALManager extends IntentService {
 								}
 
 							} catch (Exception e) {
+								errorNotification();
 								Log.e(LOG_NAME, "push dirty", e);
 							}
 							break;
@@ -496,11 +504,23 @@ public class MALManager extends IntentService {
 			result = (con.getResponseCode() == 200);
 
 		} catch (Exception e) {
+			Toast.makeText(c, R.string.connectError, Toast.LENGTH_SHORT).show();
 			Log.e(LOG_NAME, "verifyCredentials", e);
 		}
 
 		return result;
 
+	}
+
+	private void errorNotification() {
+		NotificationManager mManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		Intent intent = new Intent(this, main.class);
+		PendingIntent pi = PendingIntent.getService(this, 0, intent, 0);
+
+		Notification notification = new Notification(R.drawable.icon, getResources().getString(R.string.connectError), System.currentTimeMillis());
+		notification.setLatestEventInfo(this, "MAL for Android", getResources().getString(R.string.connectError), pi);
+		
+		mManager.notify(0, notification);
 	}
 
 }

@@ -62,7 +62,9 @@ Please be patient this first loading can be slow."</string>
     
     <string name="intPickerInc">+</string>
     <string name="intPickerDec">-</string>
-    <string name="intPickerButton">Cancel</string>
+    <string name="intPickerButton">Ok</string>
+    
+    <string name="connectError">Unable to connect to API provider</string>
     
     <string name="anime_table_def">
 CREATE TABLE if not exists `animeList` (

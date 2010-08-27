@@ -47,7 +47,7 @@ class IntegerPicker extends Dialog implements OnClickListener {
 	}
 	
 	public boolean wasCanceled(){
-		return canceled;
+		return !(canceled);
 	}
 	
 	public int getCurrent(){

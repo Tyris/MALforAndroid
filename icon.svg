@@ -27,8 +27,8 @@
        id="linearGradient3192"
        x1="33.855709"
        y1="-6.3314795"
-       x2="34.507927"
-       y2="27.058754"
+       x2="33.736538"
+       y2="30.530005"
        gradientUnits="userSpaceOnUse"
        gradientTransform="translate(-0.3456226,0.4042266)" />
     <linearGradient
@@ -55,10 +55,9 @@
        gradientTransform="matrix(1.224,-4.7990372e-8,0,0.136,-6.9681691,48.714045)"
        gradientUnits="userSpaceOnUse" />
     <linearGradient
-       inkscape:collect="always"
        id="linearGradient3186">
       <stop
-         style="stop-color:#ffffff;stop-opacity:1;"
+         style="stop-color:#ffffff;stop-opacity:0.64601767;"
          offset="0"
          id="stop3188" />
       <stop
@@ -112,7 +111,7 @@
        gradientTransform="matrix(1.0093785,0,0,1.0322276,-1.1596289,1.6966612)"
        x1="33.855709"
        y1="-6.3314795"
-       x2="34.688057"
+       x2="32.809433"
        y2="38.684097" />
   </defs>
   <sodipodi:namedview
@@ -125,14 +124,14 @@
      inkscape:zoom="7.7781746"
      inkscape:cx="59.99446"
      inkscape:cy="19.926523"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="layer2"
      showgrid="true"
      inkscape:document-units="px"
      inkscape:grid-bbox="true"
      inkscape:window-width="1280"
      inkscape:window-height="964"
-     inkscape:window-x="-4"
-     inkscape:window-y="-4" />
+     inkscape:window-x="44"
+     inkscape:window-y="52" />
   <metadata
      id="metadata2388">
     <rdf:RDF>
@@ -184,7 +183,7 @@
      style="display:inline">
     <path
        style="fill:url(#linearGradient3363);fill-opacity:1;stroke:#ffffff;stroke-width:0;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:0;display:inline"
-       d="M 24.109786,19.627451 C 11.480958,12.211071 4.61604,20.851582 4.8086461,14.89489 L 4.6047697,14.730926 C 4.6047697,8.7260814 10.174995,3.6347268 16.774669,3.6347268 L 48.683122,3.8918565 C 55.282796,3.8918565 59.310243,8.5975166 59.310243,14.602361 L 59.128425,18.872832 C 58.782671,25.230121 56.731885,29.351721 38.359817,27.627453"
+       d="M 24.109786,19.627451 C 11.480958,12.211071 3.9732157,21.751536 4.8086461,14.89489 L 4.4762048,14.473796 C 4.4762048,8.4689517 10.174995,3.6347268 16.774669,3.6347268 L 48.425992,3.8918565 C 55.025666,3.8918565 59.310243,8.0832571 59.310243,14.088102 L 59.128425,18.872832 C 57.497022,24.330167 56.731885,27.680378 38.359817,25.95611"
        id="rect3184"
        sodipodi:nodetypes="cccccccz" />
   </g>
