@@ -452,7 +452,7 @@ public class MALManager extends IntentService {
 		int interval = Integer.parseInt(perfs.getString("updateFreq", "360000"));
 
 		Intent i = new Intent(this, MALManager.class);
-		i.setAction(Intent.ACTION_SYNC);
+		i.setAction(SYNC);
 		PendingIntent mAlarmSender = PendingIntent.getService(this, 0, i, PendingIntent.FLAG_NO_CREATE);
 		if (mAlarmSender == null) {
 			mAlarmSender = PendingIntent.getService(this, 0, i, 0);
