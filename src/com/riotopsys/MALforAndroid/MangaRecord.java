@@ -1,7 +1,5 @@
 package com.riotopsys.MALforAndroid;
 
-import java.io.Serializable;
-
 import org.json.JSONObject;
 
 import android.database.Cursor;
@@ -9,19 +7,25 @@ import android.database.sqlite.SQLiteDatabase;
 import android.text.Html;
 import android.util.Log;
 
-public class AnimeRecord extends MALRecord implements Serializable {
+public class MangaRecord extends MALRecord  {
 
-	private final static long serialVersionUID = 2091730735738808331L;
+	private static final long serialVersionUID = 6018807873534986692L;
 
-	private final static String LOG_NAME = "AnimeRecord.java";
+	private final static String LOG_NAME = "MangaRecord";
 
 	public long id;
 	public String title;
 	public String type;
 	public String imageUrl;
-	public int episodes;
+	
+	public int chapters;
+	public int volumes;
+	
 	public String status;
-	public int watchedEpisodes;
+
+	public int chaptersRead;
+	public int volumesRead; 
+	
 	public int score;
 	public String watchedStatus;
 	public String memberScore;
@@ -29,22 +33,28 @@ public class AnimeRecord extends MALRecord implements Serializable {
 	public String synopsis;
 	public int dirty;
 
-	public AnimeRecord() {
+	public MangaRecord() {
 		dirty = UNSYNCED;
 	}
 
-	public AnimeRecord(long id2, SQLiteDatabase db) throws Exception{
+	public MangaRecord(long id2, SQLiteDatabase db) throws Exception{
 		pullFromDB(id2, db);
 	}
 
-	public AnimeRecord(JSONObject raw) {
+	public MangaRecord(JSONObject raw) {
 		try {			
 			id = raw.getInt("id");
 			
-			if ( raw.isNull("episodes") ){
-				episodes = 0;
+			if ( raw.isNull("chapters") ){
+				chapters = 0;
 			} else {
-				episodes = raw.getInt("episodes");
+				chapters = raw.getInt("chapters");
+			}
+			
+			if ( raw.isNull("volumes") ){
+				volumes = 0;
+			} else {
+				volumes = raw.getInt("volumes");
 			}
 			
 			if ( raw.isNull("score") ){
@@ -53,10 +63,16 @@ public class AnimeRecord extends MALRecord implements Serializable {
 				score = raw.getInt("score");
 			}
 			
-			if ( raw.isNull("watched_episodes") ){
-				watchedEpisodes = 0;
+			if ( raw.isNull("chapters_read") ){
+				chaptersRead = 0;
 			} else {
-				watchedEpisodes = raw.getInt("watched_episodes");
+				chaptersRead = raw.getInt("chapters_read");
+			}
+			
+			if ( raw.isNull("volumes_read") ){
+				volumesRead = 0;
+			} else {
+				volumesRead = raw.getInt("volumes_read");
 			}
 			
 			title = Html.fromHtml(raw.getString("title")).toString();
@@ -75,14 +91,21 @@ public class AnimeRecord extends MALRecord implements Serializable {
 	}
 
 	// loads fields from table
+	@Override
 	public void pullFromDB(long id, SQLiteDatabase db) throws Exception {
 		
 		Cursor c = db.rawQuery("select * from animeList where id = " + String.valueOf(id), null);
 		if (c.moveToFirst()) {
 			// c.getInt(c.getColumnIndex("watchedEpisodes"))
 			this.id = c.getInt(c.getColumnIndex("id"));
-			episodes = c.getInt(c.getColumnIndex("episodes"));
-			watchedEpisodes = c.getInt(c.getColumnIndex("watchedEpisodes"));
+			
+			chapters = c.getInt(c.getColumnIndex("chapters"));
+			volumes = c.getInt(c.getColumnIndex("volumes"));
+			
+			
+			chaptersRead = c.getInt(c.getColumnIndex("chaptersRead"));
+			volumesRead = c.getInt(c.getColumnIndex("volumesRead"));
+			
 			score = c.getInt(c.getColumnIndex("score"));
 
 			title = c.getString(c.getColumnIndex("title"));
@@ -102,23 +125,26 @@ public class AnimeRecord extends MALRecord implements Serializable {
 		}
 	}
 
+	@Override
 	public void pushToDB(SQLiteDatabase db) {
 		try {
 			db.execSQL(insertStatement());
 		} catch (Exception e) {
-			Log.i(LOG_NAME, "pushToDB", e);
+			Log.i(LOG_NAME, "pushToDB", e);			
 		}
 	}
 
 	private String insertStatement() {
-		return "replace into `animeList` values (" + 
+		return "replace into `mangaList` values (" + 
 			String.valueOf(id) + ", " + 
 			addQuotes(title) + ", " + 
 			addQuotes(type) + ", " + 
 			addQuotes(imageUrl) + ", " + 
-			String.valueOf(episodes) + ", " + 
+			String.valueOf(chapters) + ", " + 
+			String.valueOf(volumes) + ", " +
 			addQuotes(status) + ", " + 
-			String.valueOf(watchedEpisodes) + ", " + 
+			String.valueOf(chaptersRead) + ", " + 
+			String.valueOf(volumesRead) + ", " +
 			String.valueOf(score) + ", " + 
 			addQuotes(watchedStatus) + ", " + 
 			String.valueOf(dirty) + ", " + 

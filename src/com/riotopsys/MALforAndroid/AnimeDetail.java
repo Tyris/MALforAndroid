@@ -87,7 +87,7 @@ public class AnimeDetail extends Activity {
 		synopsis.setText(ar.synopsis);
 
 		File root = Environment.getExternalStorageDirectory();
-		File file = new File(root, res.getString(R.string.imagePath) + String.valueOf(ar.id));
+		File file = new File(root, res.getString(R.string.imagePathAnime) + String.valueOf(ar.id));
 		Intent i = new Intent(this, MALManager.class);
 		i.setAction(MALManager.IMAGE);
 		Bundle b = new Bundle();

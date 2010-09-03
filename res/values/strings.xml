@@ -16,7 +16,8 @@ Please be patient this first loading can be slow."</string>
     <string name="detailScorePrefix">Score: </string>
     <string name="detailMemberScorePrefix">Member Score: </string>
     <string name="detailRankPrefix">Rank: </string>
-    <string name="imagePath">Android/data/com.riotopsys.MALForAndroid/images/</string>
+    <string name="imagePathAnime">Android/data/com.riotopsys.MALForAndroid/anime/</string>
+    <string name="imagePathManga">Android/data/com.riotopsys.MALForAndroid/manga/</string>
     <string name="deleting">Deleting Item...</string>
     
     <string name="prefAcctTitle">Account Settings</string>
@@ -75,6 +76,27 @@ CREATE TABLE if not exists `animeList` (
   `episodes` INTEGER UNSIGNED NOT NULL,
   `status` CHAR(40) NOT NULL,
   `watchedEpisodes` INTEGER UNSIGNED NOT NULL,
+  `score` INTEGER UNSIGNED NOT NULL,
+  `watchedStatus` CHAR(40) NOT NULL,
+  `dirty` INTEGER UNSIGNED NOT NULL DEFAULT 0,
+  `memberScore` CHAR(40) DEFAULT NULL,
+  `rank` CHAR(40) DEFAULT NULL,
+  `synopsis` BLOB DEFAULT NULL,
+  PRIMARY KEY (`id`)
+)
+    </string>
+    
+        <string name="manga_table_def">
+CREATE TABLE if not exists `mangaList` (
+  `id` INTEGER UNSIGNED NOT NULL,
+  `title` CHAR(40) NOT NULL,
+  `type` CHAR(40) NOT NULL,
+  `imageUrl` CHAR(40) NOT NULL,
+  `chapters` INTEGER UNSIGNED NOT NULL,
+  `volumes` INTEGER UNSIGNED NOT NULL,
+  `status` CHAR(40) NOT NULL,
+  `chaptersRead` INTEGER UNSIGNED NOT NULL,
+  `volumesRead` INTEGER UNSIGNED NOT NULL,
   `score` INTEGER UNSIGNED NOT NULL,
   `watchedStatus` CHAR(40) NOT NULL,
   `dirty` INTEGER UNSIGNED NOT NULL DEFAULT 0,
