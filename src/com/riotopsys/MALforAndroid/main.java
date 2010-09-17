@@ -34,7 +34,7 @@ import android.widget.Toast;
 public class main extends Activity {
 
 	private final static String LOG_NAME = "MAL Main";
-	
+
 	private ListView lv;
 	private SQLiteDatabase db;
 	private SimpleCursorAdapter adapter;
@@ -97,12 +97,12 @@ public class main extends Activity {
 
 		ipWatched = new IntegerPicker(this);
 		ipWatched.setTitle("Episodes Watched");
-		ipWatched.setOnDismissListener( new WatchDismissed() );
+		ipWatched.setOnDismissListener(new WatchDismissed());
 
 		ipScore = new IntegerPicker(this);
 		ipScore.setTitle("Set Score");
 		ipScore.setLimits(0, 10);
-		ipScore.setOnDismissListener(new ScoreDismissed() );
+		ipScore.setOnDismissListener(new ScoreDismissed());
 
 		if (perfs.getString("userName", "").equals("") || perfs.getString("api", "").equals("")) {
 			Intent i = new Intent(this, Preferences.class);
@@ -135,11 +135,11 @@ public class main extends Activity {
 				postIntent = true;
 				break;
 			case R.id.itemStatusDropped:
-				LongClickRecord.watchedStatus= "dropped";
+				LongClickRecord.watchedStatus = "dropped";
 				postIntent = true;
 				break;
 			case R.id.itemStatusOnHold:
-				LongClickRecord.watchedStatus= "on-hold";
+				LongClickRecord.watchedStatus = "on-hold";
 				postIntent = true;
 				break;
 			case R.id.itemStatusPlantoWatch:
@@ -199,15 +199,15 @@ public class main extends Activity {
 
 	@Override
 	public void onPause() {
-		//unregisterReceiver(rec);
+		unregisterReceiver(rec);
 		// adapter.getCursor().close();
 		super.onPause();
 	}
 
 	@Override
 	public void onResume() {
-		//setFilter(lastChoice);
-		//registerReceiver(rec, intentFilter);
+		// setFilter(lastChoice);
+		registerReceiver(rec, intentFilter);
 		super.onPause();
 	}
 
@@ -310,7 +310,7 @@ public class main extends Activity {
 		}
 
 	}
-	
+
 	private class WatchDismissed implements OnDismissListener {
 		@Override
 		public void onDismiss(DialogInterface dialog) {
@@ -328,7 +328,7 @@ public class main extends Activity {
 			}
 		}
 	}
-	
+
 	private class ScoreDismissed implements OnDismissListener {
 		@Override
 		public void onDismiss(DialogInterface dialog) {
@@ -342,27 +342,34 @@ public class main extends Activity {
 
 				i.putExtras(b);
 				startService(i);
-				
+
 			}
 		}
 	}
-	
+
 	private class PerfChange implements OnSharedPreferenceChangeListener {
 		@Override
 		public void onSharedPreferenceChanged(SharedPreferences arg0, String key) {
 			if (key.equals("userName") || key.equals("passwd")) {
 				if (MALManager.verifyCredentials(getBaseContext())) {
-					Toast.makeText(getBaseContext(), R.string.firstSync, Toast.LENGTH_LONG*2).show();
+					Toast.makeText(getBaseContext(), R.string.firstSync, Toast.LENGTH_LONG * 2).show();
 					Intent i = new Intent(getBaseContext(), MALManager.class);
 					i.setAction(MALManager.SYNC);
 					startService(i);
-				} else{
+				} else {
 					Log.i(LOG_NAME, "verifyCredentials: failed");
 				}
 			} else {
 				Log.i(LOG_NAME, "Credentials changed");
 			}
+			if (key.equals("updateFreq")) {
+				Log.i(LOG_NAME, "chg sync");
+				Intent i = new Intent(getBaseContext(), MALManager.class);
+				i.setAction(MALManager.SCHEDULE);
+				getBaseContext().startService(i);
+			}
 		}
+
 	}
 
 }
