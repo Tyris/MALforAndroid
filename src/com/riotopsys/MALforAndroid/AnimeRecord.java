@@ -15,7 +15,7 @@ public class AnimeRecord extends MALRecord implements Serializable {
 
 	private final static String LOG_NAME = "AnimeRecord.java";
 
-	public long id;
+	//public long id;
 	public String title;
 	public String type;
 	public String imageUrl;

@@ -3,9 +3,13 @@
     <string name="processId">managerProcess</string>
     <string name="app_name">MAL for Android</string>
     
+    <string name="pullAnime">Pulling anime list from MAL</string>
+    <string name="pullManga">Pulling Manga list from MAL</string>
+    
     <string name="menuSort">Sort</string>
     <string name="menuSettings">Settings</string>
     <string name="menuSync">Sync Now</string>
+    <string name="menuSwitch">Switch Lists</string>
     
     <string name="firstSync">"Loading your Anime list now.
 Please be patient this first loading can be slow."</string>
@@ -33,6 +37,10 @@ Please be patient this first loading can be slow."</string>
     <string name="prefAPIDefault">mal-api.com</string>
     
     <string name="prefPresent">Presentation Options</string>
+    
+    <string name="prefModeSummary">Default starting list for MFA</string>
+    <string name="prefModeTitle">Default list</string>
+    <string name="prefModeDefault">Anime</string>
     
     <string name="prefViewTitle">Default View</string>
     <string name="prefViewDefault">1</string>
@@ -111,6 +119,10 @@ CREATE TABLE if not exists `mangaList` (
     	select id as `_id`, title, watchedEpisodes, episodes, score from `animeList`
     </string>
     
+    <string name="cursorSelectManga">
+    	select id as `_id`, title, chaptersRead as watchedEpisodes, chapters as episodes, score from `mangaList`
+    </string>
+    
     <string name="dirty">
     	update animeList set dirty = 1 where dirty = 0;
     </string>
@@ -120,6 +132,11 @@ CREATE TABLE if not exists `mangaList` (
     </string>
     
     <string name="filter">Filter settings</string>
+    
+    <string-array name="modeArray">
+        <item>Anime</item>
+        <item>Manga</item>
+    </string-array>
     
     <string-array name="filterArray">
         <item>All Anime</item>
@@ -139,6 +156,23 @@ CREATE TABLE if not exists `mangaList` (
         <item>5</item>        
     </string-array>
     
+    <string-array name="filterArrayManga">
+    	<item>All Manga</item>
+        <item>Reading</item>
+        <item>Completed</item>
+        <item>On Hold</item>
+        <item>Dropped</item>
+        <item>Plan to read</item>
+    </string-array>
+    
+    <!--string-array name="filterPerfsManga">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+    </string-array-->
+    
     <string-array name="sortArray">
     	<item>Title</item>
 		<item>Completed</item>
@@ -152,6 +186,15 @@ CREATE TABLE if not exists `mangaList` (
         <item>where watchedStatus = \"on-hold\"</item>
         <item>where watchedStatus = \"dropped\"</item>
         <item>where watchedStatus = \"plan to watch\"</item>        
+    </string-array>
+    
+    <string-array name="filterWhereManga">
+        <item>where id is not null</item>
+        <item>where watchedStatus = \"reading\"</item>
+        <item>where watchedStatus = \"completed\"</item>
+        <item>where watchedStatus = \"on-hold\"</item>
+        <item>where watchedStatus = \"dropped\"</item>
+        <item>where watchedStatus = \"plan to read\"</item>        
     </string-array>
     
     <string name="titleSort"> order by title </string>

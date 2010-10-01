@@ -13,7 +13,6 @@ public class MangaRecord extends MALRecord  {
 
 	private final static String LOG_NAME = "MangaRecord";
 
-	public long id;
 	public String title;
 	public String type;
 	public String imageUrl;
@@ -94,7 +93,7 @@ public class MangaRecord extends MALRecord  {
 	@Override
 	public void pullFromDB(long id, SQLiteDatabase db) throws Exception {
 		
-		Cursor c = db.rawQuery("select * from animeList where id = " + String.valueOf(id), null);
+		Cursor c = db.rawQuery("select * from mangaList where id = " + String.valueOf(id), null);
 		if (c.moveToFirst()) {
 			// c.getInt(c.getColumnIndex("watchedEpisodes"))
 			this.id = c.getInt(c.getColumnIndex("id"));

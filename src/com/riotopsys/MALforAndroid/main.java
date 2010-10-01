@@ -5,11 +5,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnDismissListener;
-import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.res.Resources;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
@@ -29,13 +28,16 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class main extends Activity {
 
 	private final static String LOG_NAME = "MAL Main";
 	
-	private ListView lv;
+	private TextView title;
+	private ListView lv;	
+	private Spinner spinner;
 	private SQLiteDatabase db;
 	private SimpleCursorAdapter adapter;
 	private String sort;
@@ -49,6 +51,8 @@ public class main extends Activity {
 
 	private PerfChange pfChang;
 
+	private boolean animeMode;
+
 	// private MALAdapter adapter;
 
 	/** Called when the activity is first created. */
@@ -57,52 +61,52 @@ public class main extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 
-		lv = (ListView) findViewById(R.id.lv);
-
-		Spinner spinner = (Spinner) findViewById(R.id.spinner);
-		ArrayAdapter<CharSequence> spinnnerAdapter = ArrayAdapter.createFromResource(this, R.array.filterArray, android.R.layout.simple_spinner_item);
-		spinnnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		spinner.setAdapter(spinnnerAdapter);
-
-		MALSqlHelper openHelper = new MALSqlHelper(this.getBaseContext());
-		db = openHelper.getReadableDatabase();
-
-		adapter = new SimpleCursorAdapter(this, R.layout.mal_item, null, new String[] { "title", "watchedEpisodes", "episodes", "score" }, new int[] {
-				R.id.title, R.id.complete, R.id.total, R.id.score });
-		lv.setAdapter(adapter);
-
-		registerForContextMenu(lv);
-
 		PreferenceManager.setDefaultValues(this, R.xml.preferances, false);
 		SharedPreferences perfs = PreferenceManager.getDefaultSharedPreferences(this);
 		pfChang = new PerfChange();
-		perfs.registerOnSharedPreferenceChangeListener(pfChang);
 
+		title = (TextView) findViewById(R.id.mainTitle);
+		lv = (ListView) findViewById(R.id.lv);
+		spinner = (Spinner) findViewById(R.id.spinner);
+		
 		if (savedInstanceState != null) {
+			animeMode = savedInstanceState.getBoolean("mode", true);
 			sort = savedInstanceState.getString("sort");
-			spinner.setSelection(savedInstanceState.getInt("filter"));
+			spinner.setSelection(savedInstanceState.getInt("filter"));			
 		} else {
+			animeMode = perfs.getString("mode", getString(R.string.prefModeDefault)).equals(getString(R.string.prefModeDefault));
 			sort = perfs.getString("sort", getString(R.string.titleSort));
 			spinner.setSelection(Integer.valueOf(perfs.getString("filter", "0")));
 		}
 
+		perfs.registerOnSharedPreferenceChangeListener(pfChang);
+		
+		ipWatched = new IntegerPicker(this);
+		ipWatched.setOnDismissListener(new WatchDismissed());
+
+		ipScore = new IntegerPicker(this);
+		ipScore.setTitle("Set Score");
+		ipScore.setLimits(0, 10);
+		ipScore.setOnDismissListener(new ScoreDismissed());
+		
+		initList();
+		
+		adapter = new SimpleCursorAdapter(this, R.layout.mal_item, null, new String[] { "title", "watchedEpisodes", "episodes", "score" }, new int[] {R.id.title, R.id.complete, R.id.total, R.id.score });
+		lv.setAdapter(adapter);
+
+		MALSqlHelper openHelper = new MALSqlHelper(this.getBaseContext());
+		db = openHelper.getReadableDatabase();
+
+		registerForContextMenu(lv);
+
 		spinner.setOnItemSelectedListener(new FilterSelected());
-		lv.setOnItemClickListener(new AnimeSelected(this.getBaseContext()));
+		lv.setOnItemClickListener(new AnimeSelected(getBaseContext()));
 
 		intentFilter = new IntentFilter(MALManager.RELOAD);
 
 		rec = new Reciever();
 
 		registerReceiver(rec, intentFilter);
-
-		ipWatched = new IntegerPicker(this);
-		ipWatched.setTitle("Episodes Watched");
-		ipWatched.setOnDismissListener( new WatchDismissed() );
-
-		ipScore = new IntegerPicker(this);
-		ipScore.setTitle("Set Score");
-		ipScore.setLimits(0, 10);
-		ipScore.setOnDismissListener(new ScoreDismissed() );
 
 		if (perfs.getString("userName", "").equals("") || perfs.getString("api", "").equals("")) {
 			Intent i = new Intent(this, Preferences.class);
@@ -113,6 +117,24 @@ public class main extends Activity {
 				Toast.makeText(this, R.string.apiSetup, Toast.LENGTH_LONG).show();
 			}
 		}
+	}
+	
+	private void initList(){
+		ArrayAdapter<CharSequence> spinnnerAdapter;
+		if (animeMode) {
+			spinnnerAdapter = ArrayAdapter.createFromResource(this, R.array.filterArray, android.R.layout.simple_spinner_item);
+			//adapter = new SimpleCursorAdapter(this, R.layout.mal_item, null, new String[] { "title", "watchedEpisodes", "episodes", "score" }, new int[] {R.id.title, R.id.complete, R.id.total, R.id.score });
+			ipWatched.setTitle("Episodes Watched");
+			title.setText("Anime List");
+		} else {
+			spinnnerAdapter = ArrayAdapter.createFromResource(this, R.array.filterArrayManga, android.R.layout.simple_spinner_item);
+			//adapter = new SimpleCursorAdapter(this, R.layout.mal_item, null, new String[] { "title", "watchedEpisodes", "episodes", "score" }, new int[] {R.id.title, R.id.complete, R.id.total, R.id.score });
+			ipWatched.setTitle("Chapter Read");
+			title.setText("Manga List");
+		}
+		spinnnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		spinner.setAdapter(spinnnerAdapter);
+		//lv.setAdapter(adapter);
 	}
 
 	@Override
@@ -135,11 +157,11 @@ public class main extends Activity {
 				postIntent = true;
 				break;
 			case R.id.itemStatusDropped:
-				LongClickRecord.watchedStatus= "dropped";
+				LongClickRecord.watchedStatus = "dropped";
 				postIntent = true;
 				break;
 			case R.id.itemStatusOnHold:
-				LongClickRecord.watchedStatus= "on-hold";
+				LongClickRecord.watchedStatus = "on-hold";
 				postIntent = true;
 				break;
 			case R.id.itemStatusPlantoWatch:
@@ -199,15 +221,15 @@ public class main extends Activity {
 
 	@Override
 	public void onPause() {
-		//unregisterReceiver(rec);
+		// unregisterReceiver(rec);
 		// adapter.getCursor().close();
 		super.onPause();
 	}
 
 	@Override
 	public void onResume() {
-		//setFilter(lastChoice);
-		//registerReceiver(rec, intentFilter);
+		// setFilter(lastChoice);
+		// registerReceiver(rec, intentFilter);
 		super.onPause();
 	}
 
@@ -237,6 +259,11 @@ public class main extends Activity {
 				i = new Intent(this, Preferences.class);
 				startActivity(i);
 				break;
+			case R.id.menuSwitch:
+				animeMode = (!animeMode);
+				initList();
+				setFilter(lastChoice);
+				break;				
 			case R.id.menuAdd:
 				i = new Intent(this, Search.class);
 				startActivity(i);
@@ -244,18 +271,23 @@ public class main extends Activity {
 		}
 		return true;
 	}
-
+	
 	public void onSaveInstanceState(Bundle savedInstanceState) {
 		savedInstanceState.putString("sort", sort);
 		savedInstanceState.putInt("filter", lastChoice);
+		savedInstanceState.putBoolean("mode", animeMode);
 
 		super.onSaveInstanceState(savedInstanceState);
 	}
 
 	private void setFilter(int choice) {
 		lastChoice = choice;
-		Resources res = this.getResources();
-		String query = getString(R.string.cursorSelect) + res.getStringArray(R.array.filterWhere)[choice] + " and dirty <> 3 " + sort;
+		String query;
+		if ( animeMode ){
+			query = getString(R.string.cursorSelect) + getResources().getStringArray(R.array.filterWhere)[choice] + " and dirty <> 3 " + sort;
+		} else {
+			query = getString(R.string.cursorSelectManga) + getResources().getStringArray(R.array.filterWhereManga)[choice] + " and dirty <> 3 " + sort;
+		}
 
 		try {
 			// adapter.getCursor().close();
@@ -310,7 +342,7 @@ public class main extends Activity {
 		}
 
 	}
-	
+
 	private class WatchDismissed implements OnDismissListener {
 		@Override
 		public void onDismiss(DialogInterface dialog) {
@@ -328,7 +360,7 @@ public class main extends Activity {
 			}
 		}
 	}
-	
+
 	private class ScoreDismissed implements OnDismissListener {
 		@Override
 		public void onDismiss(DialogInterface dialog) {
@@ -342,21 +374,21 @@ public class main extends Activity {
 
 				i.putExtras(b);
 				startService(i);
-				
+
 			}
 		}
 	}
-	
+
 	private class PerfChange implements OnSharedPreferenceChangeListener {
 		@Override
 		public void onSharedPreferenceChanged(SharedPreferences arg0, String key) {
 			if (key.equals("userName") || key.equals("passwd")) {
 				if (MALManager.verifyCredentials(getBaseContext())) {
-					Toast.makeText(getBaseContext(), R.string.firstSync, Toast.LENGTH_LONG*2).show();
+					Toast.makeText(getBaseContext(), R.string.firstSync, Toast.LENGTH_LONG * 2).show();
 					Intent i = new Intent(getBaseContext(), MALManager.class);
 					i.setAction(MALManager.SYNC);
 					startService(i);
-				} else{
+				} else {
 					Log.i(LOG_NAME, "verifyCredentials: failed");
 				}
 			} else {

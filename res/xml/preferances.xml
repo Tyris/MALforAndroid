@@ -36,6 +36,15 @@
 	
 		<ListPreference 
 		android:persistent="true" 
+		android:title="@string/prefModeTitle" 
+		android:summary="@string/prefModeSummary"
+		android:key="mode"
+		android:entryValues="@array/modeArray"
+		android:entries="@array/modeArray"
+		android:defaultValue="@string/prefModeDefault"/>
+	
+		<ListPreference 
+		android:persistent="true" 
 		android:title="@string/prefViewTitle" 
 		android:key="filter"
 		android:entryValues="@array/filterPerfs"

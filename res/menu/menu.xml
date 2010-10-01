@@ -24,6 +24,12 @@
 	android:title="@string/menuSync"
 	android:icon="@android:drawable/ic_menu_rotate"
 	android:id="@+id/menuSync" />
+	
+	<item
+	android:title="@string/menuSwitch"
+	android:icon="@android:drawable/ic_menu_set_as"
+	android:id="@+id/menuSwitch" />
+	
 	<item
 	android:title="@string/menuSettings"
 	android:icon="@android:drawable/ic_menu_preferences"
