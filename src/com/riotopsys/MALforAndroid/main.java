@@ -47,7 +47,7 @@ public class main extends Activity {
 
 	private IntegerPicker ipWatched;
 	private IntegerPicker ipScore;
-	private AnimeRecord LongClickRecord;
+	private MALRecord longClickRecord;
 
 	private PerfChange pfChang;
 
@@ -142,8 +142,12 @@ public class main extends Activity {
 		super.onCreateContextMenu(menu, v, menuInfo);
 		MenuInflater inflater = getMenuInflater();
 		inflater.inflate(R.menu.item_menu, menu);
-
-		LongClickRecord = MALManager.getAnime(((AdapterContextMenuInfo) menuInfo).id, this.getBaseContext());
+		
+		if ( animeMode){
+			longClickRecord = MALManager.getAnime(((AdapterContextMenuInfo) menuInfo).id, this.getBaseContext());
+		} else {
+			longClickRecord = MALManager.getManga(((AdapterContextMenuInfo) menuInfo).id, this.getBaseContext());
+		}
 
 	}
 
@@ -153,40 +157,49 @@ public class main extends Activity {
 
 		switch (item.getItemId()) {
 			case R.id.itemStatusCompleted:
-				LongClickRecord.watchedStatus = "completed";
+				longClickRecord.watchedStatus = "completed";
 				postIntent = true;
 				break;
 			case R.id.itemStatusDropped:
-				LongClickRecord.watchedStatus = "dropped";
+				longClickRecord.watchedStatus = "dropped";
 				postIntent = true;
 				break;
 			case R.id.itemStatusOnHold:
-				LongClickRecord.watchedStatus = "on-hold";
+				longClickRecord.watchedStatus = "on-hold";
 				postIntent = true;
 				break;
 			case R.id.itemStatusPlantoWatch:
-				LongClickRecord.watchedStatus = "plan to watch";
+				longClickRecord.watchedStatus = "plan to watch";
 				postIntent = true;
 				break;
 			case R.id.itemStatusWatching:
-				LongClickRecord.watchedStatus = "watching";
+				longClickRecord.watchedStatus = "watching";
 				postIntent = true;
 				break;
 			case R.id.setWatched:
 
-				int totalEp = LongClickRecord.episodes;
+				int totalEp;
+				int completed;
+				if ( longClickRecord instanceof AnimeRecord ){
+					totalEp = ((AnimeRecord)longClickRecord).episodes;
+					completed = ((AnimeRecord)longClickRecord).watchedEpisodes;
+				} else {
+					totalEp = ((MangaRecord)longClickRecord).chapters;
+					completed = ((MangaRecord)longClickRecord).chaptersRead;
+				}
+				
 				if (totalEp == 0) {
 					totalEp = Integer.MAX_VALUE;
 				}
 				ipWatched.setLimits(0, totalEp);
-				ipWatched.setCurrent(LongClickRecord.watchedEpisodes);
+				ipWatched.setCurrent(completed);
 				ipWatched.show();
 
 				break;
 			case R.id.setScore:
 
 				ipScore.setLimits(0, 10);
-				ipScore.setCurrent(LongClickRecord.score);
+				ipScore.setCurrent(longClickRecord.score);
 				ipScore.show();
 
 				break;
@@ -194,7 +207,7 @@ public class main extends Activity {
 				Intent i = new Intent(this, MALManager.class);
 				i.setAction(MALManager.REMOVE);
 				Bundle b = new Bundle();
-				b.putSerializable("anime", LongClickRecord);
+				b.putSerializable("media", longClickRecord);
 				i.putExtras(b);
 				startService(i);
 				break;
@@ -204,7 +217,7 @@ public class main extends Activity {
 			Intent i = new Intent(this, MALManager.class);
 			i.setAction(MALManager.CHANGE);
 			Bundle b = new Bundle();
-			b.putSerializable("anime", LongClickRecord);
+			b.putSerializable("media", longClickRecord);
 			i.putExtras(b);
 			startService(i);
 		}
@@ -221,7 +234,7 @@ public class main extends Activity {
 
 	@Override
 	public void onPause() {
-		// unregisterReceiver(rec);
+		unregisterReceiver(rec);
 		// adapter.getCursor().close();
 		super.onPause();
 	}
@@ -229,7 +242,7 @@ public class main extends Activity {
 	@Override
 	public void onResume() {
 		// setFilter(lastChoice);
-		// registerReceiver(rec, intentFilter);
+		registerReceiver(rec, intentFilter);
 		super.onPause();
 	}
 
@@ -326,7 +339,7 @@ public class main extends Activity {
 			// Toast.LENGTH_LONG).show();
 			Intent i = new Intent(context, AnimeDetail.class);
 			Bundle b = new Bundle();
-			b.putSerializable("anime", MALManager.getAnime(id, getBaseContext()));
+			b.putSerializable("media", MALManager.getAnime(id, getBaseContext()));
 			i.putExtras(b);
 			startActivity(i);
 		}
@@ -351,8 +364,12 @@ public class main extends Activity {
 				Intent i = new Intent(getBaseContext(), MALManager.class);
 				i.setAction(MALManager.CHANGE);
 				Bundle b = new Bundle();
-				LongClickRecord.watchedEpisodes = ipWatched.getCurrent();
-				b.putSerializable("anime", LongClickRecord);
+				if ( longClickRecord instanceof AnimeRecord ){
+					((AnimeRecord)longClickRecord).watchedEpisodes = ipWatched.getCurrent();
+				} else {
+					((MangaRecord)longClickRecord).chaptersRead = ipWatched.getCurrent();
+				}
+				b.putSerializable("media", longClickRecord);
 
 				i.putExtras(b);
 				startService(i);
@@ -369,8 +386,8 @@ public class main extends Activity {
 				Intent i = new Intent(getBaseContext(), MALManager.class);
 				i.setAction(MALManager.CHANGE);
 				Bundle b = new Bundle();
-				LongClickRecord.score = ipScore.getCurrent();
-				b.putSerializable("anime", LongClickRecord);
+				longClickRecord.score = ipScore.getCurrent();
+				b.putSerializable("media", longClickRecord);
 
 				i.putExtras(b);
 				startService(i);

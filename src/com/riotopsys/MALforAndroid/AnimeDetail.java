@@ -65,7 +65,7 @@ public class AnimeDetail extends Activity {
 
 		Bundle b = getIntent().getExtras();
 
-		ar = (AnimeRecord) b.getSerializable("anime");
+		ar = (AnimeRecord) b.getSerializable("media");
 
 		display();
 

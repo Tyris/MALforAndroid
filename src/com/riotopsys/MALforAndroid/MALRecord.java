@@ -11,8 +11,16 @@ public abstract class MALRecord implements Serializable{
 	public static final int UPDATING = 1;
 	public static final int UNSYNCED = 2;
 	public static final int DELETED = 3;
-	
+		
 	public long id;
+	public int score;
+	public String watchedStatus;
+	public int dirty;
+	
+	public String title;
+	
+	public String imageUrl;
+	
 
 	public abstract void pushToDB(SQLiteDatabase db);
 

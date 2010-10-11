@@ -16,18 +16,18 @@ public class AnimeRecord extends MALRecord implements Serializable {
 	private final static String LOG_NAME = "AnimeRecord.java";
 
 	//public long id;
-	public String title;
+	//public String title;
 	public String type;
-	public String imageUrl;
+	//public String imageUrl;
 	public int episodes;
 	public String status;
 	public int watchedEpisodes;
-	public int score;
-	public String watchedStatus;
+	//public int score;
+	//public String watchedStatus;
 	public String memberScore;
 	public String rank;
 	public String synopsis;
-	public int dirty;
+	//public int dirty;
 
 	public AnimeRecord() {
 		dirty = UNSYNCED;
@@ -126,5 +126,5 @@ public class AnimeRecord extends MALRecord implements Serializable {
 			addQuotes(rank) + ", " +
 			addQuotes(synopsis) + " )";
 	}
-
+	
 }

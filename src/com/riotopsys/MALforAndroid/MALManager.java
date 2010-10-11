@@ -82,9 +82,9 @@ public class MALManager extends IntentService {
 	protected void onHandleIntent(Intent intent) {
 		String s = intent.getAction();
 		Bundle b = intent.getExtras();
-		AnimeRecord ar = null;
+		MALRecord ar = null;
 		if (b != null) {
-			ar = (AnimeRecord) b.getSerializable("anime");
+			ar = (MALRecord) b.getSerializable("media");
 		}
 
 		MALSqlHelper openHelper = new MALSqlHelper(this.getBaseContext());
@@ -124,13 +124,20 @@ public class MALManager extends IntentService {
 		db.close();
 	}
 
-	private void push(SQLiteDatabase db, AnimeRecord ar) {
+	private void push(SQLiteDatabase db, MALRecord ar) {
 		if (activeConnection) {
 			long id = ar.id;
 			StringBuffer sb = new StringBuffer();
 			URL url;
+			
+			Boolean isAnime = ( ar instanceof AnimeRecord );
+			
 			try {
-				url = new URL("http://" + api + "/animelist/anime/" + String.valueOf(id));
+				if ( isAnime ){
+					url = new URL("http://" + api + "/animelist/anime/" + String.valueOf(id));
+				} else {
+					url = new URL("http://" + api + "/mangalist/manga/" + String.valueOf(id));
+				}
 
 				HttpURLConnection con = (HttpURLConnection) url.openConnection();
 				con.setDoOutput(true);
@@ -141,7 +148,12 @@ public class MALManager extends IntentService {
 
 				// sb.append( "_method=PUT\n" );
 				sb.append("status=").append(ar.watchedStatus);
-				sb.append("&").append("episodes=").append(String.valueOf(ar.watchedEpisodes));
+				if ( isAnime ){
+					sb.append("&").append("episodes=").append(String.valueOf(((AnimeRecord)ar).watchedEpisodes));
+				} else {
+					sb.append("&").append("chapters=").append(String.valueOf(((MangaRecord)ar).chaptersRead));
+					sb.append("&").append("volumes=").append(String.valueOf(((MangaRecord)ar).volumesRead));
+				}
 				sb.append("&").append("score=").append(String.valueOf(ar.score));
 
 				OutputStreamWriter wr = new OutputStreamWriter(con.getOutputStream());
@@ -188,10 +200,15 @@ public class MALManager extends IntentService {
 					rd.close();
 
 					JSONObject raw = new JSONObject(sb.toString());
+					
+					MALRecord newRec;
+					if ( ar instanceof AnimeRecord ){
+						newRec = new AnimeRecord(raw);
+					} else {
+						newRec = new MangaRecord(raw);
+					}
 
-					AnimeRecord ar2 = new AnimeRecord(raw);
-
-					ar2.pushToDB(db);
+					newRec.pushToDB(db);
 					reloadSignal();
 
 					// int fred = con.getResponseCode();
@@ -351,11 +368,16 @@ public class MALManager extends IntentService {
 		//schedule();
 	}
 
-	private void add(SQLiteDatabase db, AnimeRecord ar) {
+	private void add(SQLiteDatabase db, MALRecord ar) {
 		String ws = ar.watchedStatus;
 		if (activeConnection) {
 			try {
-				URL url = new URL("http://" + api + "/animelist/anime");
+				URL url;
+				if ( ar instanceof AnimeRecord ){
+					url = new URL("http://" + api + "/animelist/anime");
+				} else {
+					url = new URL("http://" + api + "/mangalist/manga");
+				}
 
 				HttpURLConnection con = (HttpURLConnection) url.openConnection();
 				con.setDoOutput(true);
@@ -391,13 +413,18 @@ public class MALManager extends IntentService {
 		}
 	}
 
-	private void remove(SQLiteDatabase db, AnimeRecord ar) {
+	private void remove(SQLiteDatabase db, MALRecord ar) {
 		ar.dirty = AnimeRecord.DELETED;
 		ar.pushToDB(db);
 		reloadSignal();
 		if (activeConnection) {
 			try {
-				URL url = new URL("http://" + api + "/animelist/anime/" + String.valueOf(ar.id));
+				URL url;
+				if ( ar instanceof AnimeRecord ){
+					url = new URL("http://" + api + "/animelist/anime/" + String.valueOf(ar.id));
+				} else {
+					url = new URL("http://" + api + "/mangalist/manga/" + String.valueOf(ar.id));
+				}
 
 				HttpURLConnection con = (HttpURLConnection) url.openConnection();
 				con.setReadTimeout(getResources().getInteger(R.integer.readTimeout));
@@ -408,7 +435,11 @@ public class MALManager extends IntentService {
 				con.connect();
 
 				if (con.getResponseCode() == 200) {
-					db.execSQL("delete from animeList where id = " + String.valueOf(ar.id));
+					if ( ar instanceof AnimeRecord ){
+						db.execSQL("delete from animeList where id = " + String.valueOf(ar.id));
+					} else {
+						db.execSQL("delete from mangaList where id = " + String.valueOf(ar.id));
+					}
 				}
 			} catch (Exception e) {
 				errorNotification();
@@ -417,7 +448,7 @@ public class MALManager extends IntentService {
 		}
 	}
 
-	private void change(SQLiteDatabase db, AnimeRecord ar) {
+	private void change(SQLiteDatabase db, MALRecord ar) {
 		ar.dirty = AnimeRecord.UNSYNCED;
 		ar.pushToDB(db);
 		if (activeConnection) {
@@ -426,14 +457,21 @@ public class MALManager extends IntentService {
 		reloadSignal();
 	}
 
-	private void pullImage(SQLiteDatabase db, AnimeRecord ar) {
+	private void pullImage(SQLiteDatabase db, MALRecord ar) {
 		if (activeConnection) {
 			try {
 				URL url = new URL(ar.imageUrl);
 				URLConnection ucon = url.openConnection();
 
 				File root = Environment.getExternalStorageDirectory();
-				File file = new File(root, "Android/data/com.riotopsys.MALForAndroid/images/" + String.valueOf(ar.id));
+				File file;
+				if ( ar instanceof AnimeRecord ){
+					//file = new File(root, "Android/data/com.riotopsys.MALForAndroid/images/anime/" + String.valueOf(ar.id));
+					file = new File(root, getString(R.string.imagePathAnime) + String.valueOf(ar.id));
+				} else {
+					//file = new File(root, "Android/data/com.riotopsys.MALForAndroid/images/manga/" + String.valueOf(ar.id));
+					file = new File(root, getString(R.string.imagePathManga) + String.valueOf(ar.id));
+				}
 				file.mkdirs();
 				if (file.exists()) {
 					file.delete();
@@ -470,17 +508,23 @@ public class MALManager extends IntentService {
 		HttpURLConnection con;
 		URL url;
 
-		Cursor c = db.rawQuery("select id from animeList where dirty <> 0;", null);
+		Cursor c = db.rawQuery("select id, 1 as type from animeList where dirty <> 0 union select id, 2 as type from mangaList where dirty <> 0", null);
 
 		if (c.moveToFirst()) {
 			while (!c.isAfterLast()) {
 
 				try {
-					AnimeRecord ar = new AnimeRecord(c.getInt(c.getColumnIndex("id")), db);
+					MALRecord ar;
+					
+					if ( c.getInt(c.getColumnIndex("type")) == 1 ) {
+						ar = new AnimeRecord(c.getInt(c.getColumnIndex("id")), db);
+					} else {
+						ar = new MangaRecord(c.getInt(c.getColumnIndex("id")), db);
+					}
 
 					switch (ar.dirty) {
 						case AnimeRecord.CLEAN:
-							Log.e(LOG_NAME, "WTF i said no 0");
+							Log.wtf(LOG_NAME, "WTF I said no 0");
 							break;
 						case AnimeRecord.UPDATING:
 							// only seen during an update
@@ -519,6 +563,7 @@ public class MALManager extends IntentService {
 				}
 			}
 		}
+		
 		c.close();
 		reloadSignal();
 	}
@@ -555,6 +600,22 @@ public class MALManager extends IntentService {
 		AnimeRecord ar;
 		try {
 			ar = new AnimeRecord(id, db);
+		} catch (Exception e) {
+			ar = null;
+		}
+
+		db.close();
+		return ar;
+	}
+	
+	public static MangaRecord getManga(long id, Context c) {
+
+		MALSqlHelper openHelper = new MALSqlHelper(c);
+		SQLiteDatabase db = openHelper.getReadableDatabase();
+
+		MangaRecord ar;
+		try {
+			ar = new MangaRecord(id, db);
 		} catch (Exception e) {
 			ar = null;
 		}

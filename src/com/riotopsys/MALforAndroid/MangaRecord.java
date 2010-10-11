@@ -13,9 +13,9 @@ public class MangaRecord extends MALRecord  {
 
 	private final static String LOG_NAME = "MangaRecord";
 
-	public String title;
+	//public String title;
 	public String type;
-	public String imageUrl;
+	//public String imageUrl;
 	
 	public int chapters;
 	public int volumes;
@@ -25,12 +25,12 @@ public class MangaRecord extends MALRecord  {
 	public int chaptersRead;
 	public int volumesRead; 
 	
-	public int score;
-	public String watchedStatus;
+	//public int score;
+	//public String watchedStatus;
 	public String memberScore;
 	public String rank;
 	public String synopsis;
-	public int dirty;
+	//public int dirty;
 
 	public MangaRecord() {
 		dirty = UNSYNCED;
@@ -78,7 +78,7 @@ public class MangaRecord extends MALRecord  {
 			type = Html.fromHtml(raw.getString("type")).toString();
 			imageUrl = Html.fromHtml(raw.getString("image_url")).toString();
 			status = Html.fromHtml(raw.getString("status")).toString();
-			watchedStatus = Html.fromHtml(raw.getString("watched_status")).toString();
+			watchedStatus = Html.fromHtml(raw.getString("read_status")).toString();
 			memberScore = Html.fromHtml(raw.getString("members_score")).toString();
 			rank = Html.fromHtml(raw.getString("rank")).toString();
 			synopsis = Html.fromHtml(raw.getString("synopsis")).toString();
@@ -151,5 +151,5 @@ public class MangaRecord extends MALRecord  {
 			addQuotes(rank) + ", " +
 			addQuotes(synopsis) + " )";
 	}
-
+	
 }
