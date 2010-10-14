@@ -117,7 +117,7 @@ public class MALManager extends IntentService {
 		} else if (s.equals(IMAGE)) {
 			pullImage(db, ar);
 		} else if (s.equals(SCHEDULE)) {
-			schedule();
+			schedule( true );
 		} else {
 			Log.i("MALManager", "unknown intent: " + s);
 		}
@@ -228,7 +228,7 @@ public class MALManager extends IntentService {
 		syncAnime(db);
 		syncManga(db);
 		db.execSQL(getString(R.string.clean));// remove the unclean ones
-		schedule();
+		schedule(false);
 	}
 		
 	private void syncAnime(SQLiteDatabase db) {
@@ -290,11 +290,11 @@ public class MALManager extends IntentService {
 				//db.execSQL(getString(R.string.clean));// remove the unclean ones
 
 			} catch (Exception e) {
+				mManager.cancelAll();
 				errorNotification();
 				Log.e(LOG_NAME, "Sync failed", e);
 			}
-
-			mManager.cancelAll();
+			
 		}
 		//schedule();
 	}
@@ -573,22 +573,28 @@ public class MALManager extends IntentService {
 		sendBroadcast(i);
 	}
 
-	private void schedule() {
+	private void schedule(boolean createNew) {
 		SharedPreferences perfs = PreferenceManager.getDefaultSharedPreferences(this);
+		AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
 
-		int interval = Integer.parseInt(perfs.getString("updateFreq", "360000"));
+		int interval = Integer.parseInt(perfs.getString("updateFreq", "14400000"));
+		long firstTime = SystemClock.elapsedRealtime() + interval;
 
 		Intent i = new Intent(this, MALManager.class);
 		i.setAction(SYNC);
 		PendingIntent mAlarmSender = PendingIntent.getService(this, 0, i, PendingIntent.FLAG_NO_CREATE);
-		if (mAlarmSender == null) {
+		if (mAlarmSender == null ) {
 			mAlarmSender = PendingIntent.getService(this, 0, i, 0);
-			long firstTime = SystemClock.elapsedRealtime() + interval;
-
-			AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
+			
 			am.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, firstTime, interval, mAlarmSender);
 
 			Log.i(LOG_NAME, "schedule set");
+		} else if ( createNew ){
+			
+			am.cancel(mAlarmSender);
+			
+			am.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, firstTime, interval, mAlarmSender);
+			
 		}
 	}
 

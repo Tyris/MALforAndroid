@@ -50,7 +50,7 @@ Please be patient this first loading can be slow."</string>
     <string name="prefUpdateCat">List Update Options</string>
     
     <string name="prefUpdateTitle">Update Frequency</string>
-    <string name="prefUpdateDefault">3600000</string>
+    <string name="prefUpdateDefault">14400000</string>
     
     <string name="menuDetailReloadSyn">Reload</string>
     <string name="menuDetailDelete">Delete from list</string>
@@ -210,12 +210,14 @@ CREATE TABLE if not exists `mangaList` (
     <string-array name="updateFreqs">    
     	<item>30 Min</item>
     	<item>Hourly</item>
+    	<item>4 per Day</item>
     	<item>Daily</item>
     </string-array>
     
     <string-array name="delays">
         <item>1800000</item>
         <item>3600000</item>
+        <item>14400000</item>
         <item>86400000</item>
     </string-array>
     	

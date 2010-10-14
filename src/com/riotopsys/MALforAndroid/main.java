@@ -415,7 +415,14 @@ public class main extends Activity {
 			} else {
 				Log.i(LOG_NAME, "Credentials changed");
 			}
+			if (key.equals("updateFreq")) {
+				Log.i(LOG_NAME, "chg sync");
+				Intent i = new Intent(getBaseContext(), MALManager.class);
+				i.setAction(MALManager.SCHEDULE);
+				getBaseContext().startService(i);
+			}
 		}
+
 	}
 
 }
