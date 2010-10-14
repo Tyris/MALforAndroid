@@ -17,16 +17,16 @@ public class AnimeRecord extends MALRecord implements Serializable {
 
 	//public long id;
 	//public String title;
-	public String type;
+	//public String type;
 	//public String imageUrl;
 	public int episodes;
-	public String status;
+	//public String status;
 	public int watchedEpisodes;
 	//public int score;
 	//public String watchedStatus;
-	public String memberScore;
-	public String rank;
-	public String synopsis;
+	//public String memberScore;
+	//public String rank;
+	//public String synopsis;
 	//public int dirty;
 
 	public AnimeRecord() {

@@ -14,22 +14,22 @@ public class MangaRecord extends MALRecord  {
 	private final static String LOG_NAME = "MangaRecord";
 
 	//public String title;
-	public String type;
+	//public String type;
 	//public String imageUrl;
 	
 	public int chapters;
 	public int volumes;
 	
-	public String status;
+	//public String status;
 
 	public int chaptersRead;
 	public int volumesRead; 
 	
 	//public int score;
 	//public String watchedStatus;
-	public String memberScore;
-	public String rank;
-	public String synopsis;
+	//public String memberScore;
+	//public String rank;
+	//public String synopsis;
 	//public int dirty;
 
 	public MangaRecord() {

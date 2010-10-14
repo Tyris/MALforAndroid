@@ -18,6 +18,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -34,10 +35,12 @@ public class AnimeDetail extends Activity {
 	private TextView memberScore;
 	private TextView rank;
 	private TextView synopsis;
+	private TextView volumes;
+	
 	private IntentFilter intentFilter;
 
 	// private long id;
-	private AnimeRecord ar;
+	private MALRecord ar;
 	private Reciever rec;
 
 	@Override
@@ -63,9 +66,12 @@ public class AnimeDetail extends Activity {
 		rank = (TextView) this.findViewById(R.id.detailRank);
 		synopsis = (TextView) this.findViewById(R.id.detailSynopsis);
 
+		volumes = (TextView) this.findViewById(R.id.detailVolumes);
+		
+		
 		Bundle b = getIntent().getExtras();
 
-		ar = (AnimeRecord) b.getSerializable("media");
+		ar = (MALRecord) b.getSerializable("media");
 
 		display();
 
@@ -74,24 +80,33 @@ public class AnimeDetail extends Activity {
 	private void display() {
 		
 		Resources res = getResources();
-
+		
+		File root = Environment.getExternalStorageDirectory();
+		File file;
 		title.setText(ar.title);
-		progress.setText(String.valueOf(ar.watchedEpisodes) + " of " + String.valueOf(ar.episodes));
+		if ( ar instanceof AnimeRecord ){
+			progress.setText(String.valueOf(((AnimeRecord)ar).watchedEpisodes) + " of " + String.valueOf(((AnimeRecord)ar).episodes));
+			file = new File(root, res.getString(R.string.imagePathAnime) + String.valueOf(ar.id));
+			volumes.setVisibility(View.GONE);
+		} else {
+			progress.setText("Chap:" + String.valueOf(((MangaRecord)ar).chaptersRead) + " of " + String.valueOf(((MangaRecord)ar).chapters));
+			volumes.setText("Vol:" + String.valueOf(((MangaRecord)ar).volumesRead) + " of " + String.valueOf(((MangaRecord)ar).volumes));
+			file = new File(root, res.getString(R.string.imagePathManga) + String.valueOf(ar.id));
+			volumes.setVisibility(View.VISIBLE);
+		}
 		score.setText( res.getString(R.string.detailScorePrefix) + String.valueOf(ar.score));
 		status.setText(ar.status);
 		type.setText(ar.type);
 		watchedStatus.setText(ar.watchedStatus);
 
-		memberScore.setText( res.getString(R.string.detailScorePrefix) + ar.memberScore);
+		memberScore.setText( res.getString(R.string.detailMemberScorePrefix) + ar.memberScore);
 		rank.setText( res.getString(R.string.detailRankPrefix) + ar.rank);
 		synopsis.setText(ar.synopsis);
 
-		File root = Environment.getExternalStorageDirectory();
-		File file = new File(root, res.getString(R.string.imagePathAnime) + String.valueOf(ar.id));
 		Intent i = new Intent(this, MALManager.class);
 		i.setAction(MALManager.IMAGE);
 		Bundle b = new Bundle();
-		b.putSerializable("anime", ar);
+		b.putSerializable("media", ar);
 		i.putExtras(b);
 
 		if (file.exists()) {

@@ -21,6 +21,12 @@ public abstract class MALRecord implements Serializable{
 	
 	public String imageUrl;
 	
+	public String status;
+	
+	public String memberScore;
+	public String rank;
+	public String synopsis;
+	public String type;
 
 	public abstract void pushToDB(SQLiteDatabase db);
 
