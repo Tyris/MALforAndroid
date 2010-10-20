@@ -36,6 +36,8 @@ public class Search extends Activity {
 	private ListView lv;
 	private EditText text;
 	private Button search;
+	
+	private boolean animeMode; 
 
 	ArrayList<HashMap<String, String>> list = new ArrayList<HashMap<String, String>>();
 	private SimpleAdapter adapter;
@@ -65,13 +67,20 @@ public class Search extends Activity {
 		SearchListener sl = new SearchListener();
 		search.setOnClickListener(sl);
 		
+		Bundle b = getIntent().getExtras();
+		animeMode = b.getBoolean("mode");
+		
 	}
 
 	@Override
 	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
 		super.onCreateContextMenu(menu, v, menuInfo);
 		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.menu.search_item, menu);
+		if ( animeMode ){
+			inflater.inflate(R.menu.search_item, menu);
+		} else {
+			inflater.inflate(R.menu.search_item_manga, menu);
+		}
 	}
 
 	@Override
@@ -82,13 +91,22 @@ public class Search extends Activity {
 		Bundle b = new Bundle();
 
 		AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
-		AnimeRecord ar = new AnimeRecord();
+		MALRecord ar;
+		if ( animeMode ){
+			ar = new AnimeRecord();
+		} else {
+			ar = new MangaRecord();
+		}
 		ar.id = Long.parseLong(list.get(info.position).get("id"));
 
 		switch (item.getItemId()) {
 			case R.id.addCompleted:
 				// b.putString("status", "completed");
 				ar.watchedStatus = "completed";
+				break;
+			case R.id.addReading:
+				// b.putString("status", "completed");
+				ar.watchedStatus = "reading";
 				break;
 			case R.id.addDropped:
 				// b.putString("status", "dropped");
@@ -102,13 +120,17 @@ public class Search extends Activity {
 				// b.putString("status", "plan to watch");
 				ar.watchedStatus = "plan to watch";
 				break;
+			case R.id.addPlantoRead:
+				// b.putString("status", "plan to watch");
+				ar.watchedStatus = "plan to read";
+				break;
 			case R.id.addWatching:
 				// b.putString("status", "watching");
 				ar.watchedStatus = "watching";
 				break;
 		}
 
-		b.putSerializable("anime", ar);
+		b.putSerializable("media", ar);
 
 		i.putExtras(b);
 		startService(i);
@@ -123,8 +145,13 @@ public class Search extends Activity {
 
 			SharedPreferences perfs = PreferenceManager.getDefaultSharedPreferences(this);
 			String api = perfs.getString("api", "");
-
-			URL url = new URL("http://" + api + "/anime/search?q=" + URLEncoder.encode(text.getText().toString().trim(), "UTF-8"));
+			
+			URL url;
+			if ( animeMode ){
+				url = new URL("http://" + api + "/anime/search?q=" + URLEncoder.encode(text.getText().toString().trim(), "UTF-8"));
+			} else {
+				url = new URL("http://" + api + "/manga/search?q=" + URLEncoder.encode(text.getText().toString().trim(), "UTF-8"));
+			}
 			
 			BufferedReader rd = new BufferedReader(new InputStreamReader(url.openConnection().getInputStream()), 512);
 			String line;
@@ -143,7 +170,11 @@ public class Search extends Activity {
 				item.put("title", jo.getString("title"));
 				item.put("type", jo.getString("type"));
 				item.put("synopsis", jo.getString("synopsis"));
-				item.put("episodes", "Episodes: " + jo.getString("episodes"));
+				if ( animeMode ){
+					item.put("episodes", "Episodes: " + jo.getString("episodes"));
+				} else {
+					item.put("episodes", "Chapters: " + jo.getString("chapters"));
+				}
 
 				list.add(item);
 

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+xmlns:android="http://schemas.android.com/apk/res/android">
+
+	<item
+	android:id="@+id/addReading"
+	android:title="Add to Reading" />
+	
+	<item
+	android:id="@+id/addCompleted"
+	android:title="Add to Completed" />
+              	
+    <item
+	android:id="@+id/addOnHold"
+	android:title="Add to On Hold" />
+              	
+	<item
+	android:id="@+id/addDropped"
+	android:title="Add to Dropped" />
+              	
+	<item
+	android:id="@+id/addPlantoRead"
+	android:title="Add to Plan to Read" />
+
+</menu>

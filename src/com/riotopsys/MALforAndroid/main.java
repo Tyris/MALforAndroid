@@ -34,9 +34,9 @@ import android.widget.Toast;
 public class main extends Activity {
 
 	private final static String LOG_NAME = "MAL Main";
-	
+
 	private TextView title;
-	private ListView lv;	
+	private ListView lv;
 	private Spinner spinner;
 	private SQLiteDatabase db;
 	private SimpleCursorAdapter adapter;
@@ -47,6 +47,7 @@ public class main extends Activity {
 
 	private IntegerPicker ipWatched;
 	private IntegerPicker ipScore;
+	private IntegerPicker ipVolumes;
 	private MALRecord longClickRecord;
 
 	private PerfChange pfChang;
@@ -68,11 +69,11 @@ public class main extends Activity {
 		title = (TextView) findViewById(R.id.mainTitle);
 		lv = (ListView) findViewById(R.id.lv);
 		spinner = (Spinner) findViewById(R.id.spinner);
-		
+
 		if (savedInstanceState != null) {
 			animeMode = savedInstanceState.getBoolean("mode", true);
 			sort = savedInstanceState.getString("sort");
-			spinner.setSelection(savedInstanceState.getInt("filter"));			
+			spinner.setSelection(savedInstanceState.getInt("filter"));
 		} else {
 			animeMode = perfs.getString("mode", getString(R.string.prefModeDefault)).equals(getString(R.string.prefModeDefault));
 			sort = perfs.getString("sort", getString(R.string.titleSort));
@@ -80,18 +81,21 @@ public class main extends Activity {
 		}
 
 		perfs.registerOnSharedPreferenceChangeListener(pfChang);
-		
+
 		ipWatched = new IntegerPicker(this);
 		ipWatched.setOnDismissListener(new WatchDismissed());
+		ipVolumes = new IntegerPicker(this);
+		ipVolumes.setOnDismissListener(new VolumesDismissed());
 
 		ipScore = new IntegerPicker(this);
 		ipScore.setTitle("Set Score");
 		ipScore.setLimits(0, 10);
 		ipScore.setOnDismissListener(new ScoreDismissed());
-		
+
 		initList();
-		
-		adapter = new SimpleCursorAdapter(this, R.layout.mal_item, null, new String[] { "title", "watchedEpisodes", "episodes", "score" }, new int[] {R.id.title, R.id.complete, R.id.total, R.id.score });
+
+		adapter = new SimpleCursorAdapter(this, R.layout.mal_item, null, new String[] { "title", "watchedEpisodes", "episodes", "score" }, new int[] {
+				R.id.title, R.id.complete, R.id.total, R.id.score });
 		lv.setAdapter(adapter);
 
 		MALSqlHelper openHelper = new MALSqlHelper(this.getBaseContext());
@@ -118,34 +122,39 @@ public class main extends Activity {
 			}
 		}
 	}
-	
-	private void initList(){
+
+	private void initList() {
 		ArrayAdapter<CharSequence> spinnnerAdapter;
 		if (animeMode) {
 			spinnnerAdapter = ArrayAdapter.createFromResource(this, R.array.filterArray, android.R.layout.simple_spinner_item);
-			//adapter = new SimpleCursorAdapter(this, R.layout.mal_item, null, new String[] { "title", "watchedEpisodes", "episodes", "score" }, new int[] {R.id.title, R.id.complete, R.id.total, R.id.score });
+			// adapter = new SimpleCursorAdapter(this, R.layout.mal_item, null,
+			// new String[] { "title", "watchedEpisodes", "episodes", "score" },
+			// new int[] {R.id.title, R.id.complete, R.id.total, R.id.score });
 			ipWatched.setTitle("Episodes Watched");
 			title.setText("Anime List");
 		} else {
 			spinnnerAdapter = ArrayAdapter.createFromResource(this, R.array.filterArrayManga, android.R.layout.simple_spinner_item);
-			//adapter = new SimpleCursorAdapter(this, R.layout.mal_item, null, new String[] { "title", "watchedEpisodes", "episodes", "score" }, new int[] {R.id.title, R.id.complete, R.id.total, R.id.score });
+			// adapter = new SimpleCursorAdapter(this, R.layout.mal_item, null,
+			// new String[] { "title", "watchedEpisodes", "episodes", "score" },
+			// new int[] {R.id.title, R.id.complete, R.id.total, R.id.score });
 			ipWatched.setTitle("Chapter Read");
 			title.setText("Manga List");
 		}
 		spinnnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		spinner.setAdapter(spinnnerAdapter);
-		//lv.setAdapter(adapter);
+		// lv.setAdapter(adapter);
 	}
 
 	@Override
 	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
 		super.onCreateContextMenu(menu, v, menuInfo);
 		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.menu.item_menu, menu);
-		
-		if ( animeMode){
+
+		if (animeMode) {
+			inflater.inflate(R.menu.item_menu, menu);
 			longClickRecord = MALManager.getAnime(((AdapterContextMenuInfo) menuInfo).id, this.getBaseContext());
 		} else {
+			inflater.inflate(R.menu.item_menu_manga, menu);
 			longClickRecord = MALManager.getManga(((AdapterContextMenuInfo) menuInfo).id, this.getBaseContext());
 		}
 
@@ -154,10 +163,16 @@ public class main extends Activity {
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
 		boolean postIntent = false;
+		int totalEp;
+		int completed;
 
 		switch (item.getItemId()) {
 			case R.id.itemStatusCompleted:
 				longClickRecord.watchedStatus = "completed";
+				postIntent = true;
+				break;
+			case R.id.itemStatusReading:
+				longClickRecord.watchedStatus = "reading";
 				postIntent = true;
 				break;
 			case R.id.itemStatusDropped:
@@ -172,28 +187,42 @@ public class main extends Activity {
 				longClickRecord.watchedStatus = "plan to watch";
 				postIntent = true;
 				break;
+			case R.id.itemStatusPlantoRead:
+				longClickRecord.watchedStatus = "plan to read";
+				postIntent = true;
+				break;
 			case R.id.itemStatusWatching:
 				longClickRecord.watchedStatus = "watching";
 				postIntent = true;
 				break;
 			case R.id.setWatched:
-
-				int totalEp;
-				int completed;
-				if ( longClickRecord instanceof AnimeRecord ){
-					totalEp = ((AnimeRecord)longClickRecord).episodes;
-					completed = ((AnimeRecord)longClickRecord).watchedEpisodes;
+				if (longClickRecord instanceof AnimeRecord) {
+					totalEp = ((AnimeRecord) longClickRecord).episodes;
+					completed = ((AnimeRecord) longClickRecord).watchedEpisodes;
 				} else {
-					totalEp = ((MangaRecord)longClickRecord).chapters;
-					completed = ((MangaRecord)longClickRecord).chaptersRead;
+					totalEp = ((MangaRecord) longClickRecord).chapters;
+					completed = ((MangaRecord) longClickRecord).chaptersRead;
 				}
-				
+
 				if (totalEp == 0) {
 					totalEp = Integer.MAX_VALUE;
 				}
 				ipWatched.setLimits(0, totalEp);
 				ipWatched.setCurrent(completed);
 				ipWatched.show();
+
+				break;
+			case R.id.setVolumeRead:
+
+				totalEp = ((MangaRecord) longClickRecord).volumes;
+				completed = ((MangaRecord) longClickRecord).volumesRead;
+
+				if (totalEp == 0) {
+					totalEp = Integer.MAX_VALUE;
+				}
+				ipVolumes.setLimits(0, totalEp);
+				ipVolumes.setCurrent(completed);
+				ipVolumes.show();
 
 				break;
 			case R.id.setScore:
@@ -276,15 +305,18 @@ public class main extends Activity {
 				animeMode = (!animeMode);
 				initList();
 				setFilter(lastChoice);
-				break;				
+				break;
 			case R.id.menuAdd:
 				i = new Intent(this, Search.class);
+				Bundle b = new Bundle();
+				b.putBoolean("media", animeMode);
+				i.putExtras(b);				
 				startActivity(i);
 				break;
 		}
 		return true;
 	}
-	
+
 	public void onSaveInstanceState(Bundle savedInstanceState) {
 		savedInstanceState.putString("sort", sort);
 		savedInstanceState.putInt("filter", lastChoice);
@@ -296,7 +328,7 @@ public class main extends Activity {
 	private void setFilter(int choice) {
 		lastChoice = choice;
 		String query;
-		if ( animeMode ){
+		if (animeMode) {
 			query = getString(R.string.cursorSelect) + getResources().getStringArray(R.array.filterWhere)[choice] + " and dirty <> 3 " + sort;
 		} else {
 			query = getString(R.string.cursorSelectManga) + getResources().getStringArray(R.array.filterWhereManga)[choice] + " and dirty <> 3 " + sort;
@@ -339,11 +371,11 @@ public class main extends Activity {
 			// Toast.LENGTH_LONG).show();
 			Intent i = new Intent(context, AnimeDetail.class);
 			Bundle b = new Bundle();
-			if ( animeMode ){
+			if (animeMode) {
 				b.putSerializable("media", MALManager.getAnime(id, getBaseContext()));
 			} else {
 				b.putSerializable("media", MALManager.getManga(id, getBaseContext()));
-			}				
+			}
 			i.putExtras(b);
 			startActivity(i);
 		}
@@ -368,11 +400,30 @@ public class main extends Activity {
 				Intent i = new Intent(getBaseContext(), MALManager.class);
 				i.setAction(MALManager.CHANGE);
 				Bundle b = new Bundle();
-				if ( longClickRecord instanceof AnimeRecord ){
-					((AnimeRecord)longClickRecord).watchedEpisodes = ipWatched.getCurrent();
+				if (longClickRecord instanceof AnimeRecord) {
+					((AnimeRecord) longClickRecord).watchedEpisodes = ipWatched.getCurrent();
 				} else {
-					((MangaRecord)longClickRecord).chaptersRead = ipWatched.getCurrent();
+					((MangaRecord) longClickRecord).chaptersRead = ipWatched.getCurrent();
 				}
+				b.putSerializable("media", longClickRecord);
+
+				i.putExtras(b);
+				startService(i);
+
+			}
+		}
+	}
+
+	private class VolumesDismissed implements OnDismissListener {
+		@Override
+		public void onDismiss(DialogInterface dialog) {
+			if (!ipVolumes.wasCanceled()) {
+
+				Intent i = new Intent(getBaseContext(), MALManager.class);
+				i.setAction(MALManager.CHANGE);
+				Bundle b = new Bundle();
+
+				((MangaRecord) longClickRecord).volumesRead = ipVolumes.getCurrent();
 				b.putSerializable("media", longClickRecord);
 
 				i.putExtras(b);

@@ -59,11 +59,16 @@ Please be patient this first loading can be slow."</string>
     <string name="menuItemStatus">Change Status</string>
     <string name="menuItemScore">Set Score</string>
     
+    <string name="menuItemLastRead">Set Last Chapter</string>	
+	<string name="menuItemLastVolume">Set Last Volume</string>
+    
     <string name="Watching">Watching</string>
+    <string name="Reading">Reading</string>
     <string name="Completed">Completed</string>
     <string name="OnHold">On Hold</string>
     <string name="Dropped">Dropped</string>
     <string name="PlantoWatch">Plan to Watch</string>
+    <string name="PlantoRead">Plan to Read</string>
     
     <string name="itemLayoutComp">Completed:</string>
     <string name="itemLayoutDivider">/</string>
