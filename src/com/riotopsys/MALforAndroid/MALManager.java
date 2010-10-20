@@ -388,7 +388,12 @@ public class MALManager extends IntentService {
 
 				// sb.append( "_method=PUT\n" );
 				StringBuffer sb = new StringBuffer();
-				sb.append("anime_id=").append(String.valueOf(ar.id));
+				if ( ar instanceof AnimeRecord ){
+					sb.append("anime_id=");
+				} else {
+					sb.append("manga_id=");
+				}
+				sb.append(String.valueOf(ar.id));
 				sb.append("&status=").append(ar.watchedStatus);
 
 				OutputStreamWriter wr = new OutputStreamWriter(con.getOutputStream());

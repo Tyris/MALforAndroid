@@ -309,7 +309,7 @@ public class main extends Activity {
 			case R.id.menuAdd:
 				i = new Intent(this, Search.class);
 				Bundle b = new Bundle();
-				b.putBoolean("media", animeMode);
+				b.putBoolean("mode", animeMode);
 				i.putExtras(b);				
 				startActivity(i);
 				break;
