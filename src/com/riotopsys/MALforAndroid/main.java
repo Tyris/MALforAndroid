@@ -68,20 +68,7 @@ public class main extends Activity {
 
 		title = (TextView) findViewById(R.id.mainTitle);
 		lv = (ListView) findViewById(R.id.lv);
-		spinner = (Spinner) findViewById(R.id.spinner);
-
-		if (savedInstanceState != null) {
-			animeMode = savedInstanceState.getBoolean("mode", true);
-			sort = savedInstanceState.getString("sort");
-			spinner.setSelection(savedInstanceState.getInt("filter"));
-		} else {
-			animeMode = perfs.getString("mode", getString(R.string.prefModeDefault)).equals(getString(R.string.prefModeDefault));
-			sort = perfs.getString("sort", getString(R.string.titleSort));
-			spinner.setSelection(Integer.valueOf(perfs.getString("filter", "0")));
-		}
-
-		perfs.registerOnSharedPreferenceChangeListener(pfChang);
-
+		
 		ipWatched = new IntegerPicker(this);
 		ipWatched.setOnDismissListener(new WatchDismissed());
 		ipVolumes = new IntegerPicker(this);
@@ -91,8 +78,26 @@ public class main extends Activity {
 		ipScore.setTitle("Set Score");
 		ipScore.setLimits(0, 10);
 		ipScore.setOnDismissListener(new ScoreDismissed());
+		
+		spinner = (Spinner) findViewById(R.id.spinner);
+		spinner.setOnItemSelectedListener(new FilterSelected());
 
-		initList();
+		if (savedInstanceState != null) {
+			animeMode = savedInstanceState.getBoolean("mode", true);
+			initList();
+			sort = savedInstanceState.getString("sort");
+			spinner.setSelection(savedInstanceState.getInt("filter"));
+			lastChoice = Integer.valueOf(savedInstanceState.getInt("filter"));
+		} else {
+			animeMode = perfs.getString("mode", getString(R.string.prefModeDefault)).equals(getString(R.string.prefModeDefault));
+			initList();
+			sort = perfs.getString("sort", getString(R.string.titleSort));
+			Log.i(LOG_NAME,perfs.getString("filter", "0"));
+			spinner.setSelection(Integer.valueOf(perfs.getString("filter", "0")));
+			lastChoice = Integer.valueOf(perfs.getString("filter", "0"));
+		}
+
+		perfs.registerOnSharedPreferenceChangeListener(pfChang);
 
 		adapter = new SimpleCursorAdapter(this, R.layout.mal_item, null, new String[] { "title", "watchedEpisodes", "episodes", "score" }, new int[] {
 				R.id.title, R.id.complete, R.id.total, R.id.score });
@@ -103,7 +108,7 @@ public class main extends Activity {
 
 		registerForContextMenu(lv);
 
-		spinner.setOnItemSelectedListener(new FilterSelected());
+		//spinner.setOnItemSelectedListener(new FilterSelected());
 		lv.setOnItemClickListener(new AnimeSelected(getBaseContext()));
 
 		intentFilter = new IntentFilter(MALManager.RELOAD);
@@ -111,6 +116,8 @@ public class main extends Activity {
 		rec = new Reciever();
 
 		registerReceiver(rec, intentFilter);
+		
+		setFilter(lastChoice);
 
 		if (perfs.getString("userName", "").equals("") || perfs.getString("api", "").equals("")) {
 			Intent i = new Intent(this, Preferences.class);
@@ -304,6 +311,7 @@ public class main extends Activity {
 			case R.id.menuSwitch:
 				animeMode = (!animeMode);
 				initList();
+				spinner.setSelection(lastChoice);
 				setFilter(lastChoice);
 				break;
 			case R.id.menuAdd:
