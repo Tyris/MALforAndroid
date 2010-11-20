@@ -6,7 +6,6 @@ import org.json.JSONObject;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.text.Html;
 import android.util.Log;
 
 public class AnimeRecord extends MALRecord implements Serializable {
@@ -38,6 +37,7 @@ public class AnimeRecord extends MALRecord implements Serializable {
 	}
 
 	public AnimeRecord(JSONObject raw) {
+		super(raw);
 		try {			
 			id = raw.getInt("id");
 			
@@ -47,28 +47,12 @@ public class AnimeRecord extends MALRecord implements Serializable {
 				episodes = raw.getInt("episodes");
 			}
 			
-			if ( raw.isNull("score") ){
-				score = 0;
-			} else {
-				score = raw.getInt("score");
-			}
-			
 			if ( raw.isNull("watched_episodes") ){
 				watchedEpisodes = 0;
 			} else {
 				watchedEpisodes = raw.getInt("watched_episodes");
 			}
 			
-			title = Html.fromHtml(raw.getString("title")).toString();
-			type = Html.fromHtml(raw.getString("type")).toString();
-			imageUrl = Html.fromHtml(raw.getString("image_url")).toString();
-			status = Html.fromHtml(raw.getString("status")).toString();
-			watchedStatus = Html.fromHtml(raw.getString("watched_status")).toString();
-			memberScore = Html.fromHtml(raw.getString("members_score")).toString();
-			rank = Html.fromHtml(raw.getString("rank")).toString();
-			synopsis = Html.fromHtml(raw.getString("synopsis")).toString();
-
-			dirty = CLEAN;
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "JSON failed", e);
 		}
@@ -125,6 +109,17 @@ public class AnimeRecord extends MALRecord implements Serializable {
 			addQuotes(memberScore) + ", " + 
 			addQuotes(rank) + ", " +
 			addQuotes(synopsis) + " )";
+	}
+	
+	@Override
+	public boolean equals( Object o ){
+		boolean result = super.equals(o); 
+		result &= (o instanceof AnimeRecord);
+		if ( result ){
+			result &= ( episodes == ((AnimeRecord)o).episodes) ;
+			result &= ( watchedEpisodes == ((AnimeRecord)o).watchedEpisodes);			
+		}		
+		return result;
 	}
 	
 }

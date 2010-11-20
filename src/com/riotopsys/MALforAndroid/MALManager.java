@@ -10,6 +10,7 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.LinkedList;
 
 import org.apache.http.util.ByteArrayBuffer;
 import org.json.JSONArray;
@@ -224,10 +225,10 @@ public class MALManager extends IntentService {
 
 	private void sync(SQLiteDatabase db) {
 		pushDirty(db);
-		db.execSQL(getString(R.string.dirty));// all is dirt		
+		//db.execSQL(getString(R.string.dirty));// all is dirt		
 		syncAnime(db);
 		syncManga(db);
-		db.execSQL(getString(R.string.clean));// remove the unclean ones
+		//db.execSQL(getString(R.string.clean));// remove the unclean ones
 		schedule(false);
 	}
 		
@@ -246,7 +247,7 @@ public class MALManager extends IntentService {
 
 			//pushDirty(db);
 
-			AnimeRecord ar = new AnimeRecord();
+			//AnimeRecord ar = new AnimeRecord();
 			try {
 
 				//db.execSQL(getString(R.string.dirty));// all is dirt
@@ -262,17 +263,39 @@ public class MALManager extends IntentService {
 					sb.append(line);
 				}
 				rd.close();
-
+				
 				JSONObject raw = new JSONObject(sb.toString());
-				JSONArray array = raw.getJSONArray("anime");				
+				JSONArray array = raw.getJSONArray("anime");
+				
+				LinkedList<Long> pulledIds = new LinkedList<Long>();
+				
 				for (int c = 0; c < array.length(); c++) {
 					JSONObject jo = array.getJSONObject(c);
 
 					notification.setLatestEventInfo(this, "MAL for Android: " + String.valueOf(c + 1) + "/" + String.valueOf(array.length()),
 							Html.fromHtml(jo.getString("title")).toString(), pi);
 					mManager.notify(0, notification);
-
+													
+					AnimeRecord arNew = new AnimeRecord(jo);
+					pulledIds.add(new Long(arNew.id));
 					try {
+						AnimeRecord arOld = new AnimeRecord(arNew.id, db);
+						
+						if ( !arOld.synopsis.equals("") ){
+							arNew.synopsis = arOld.synopsis;
+							arNew.rank = arOld.rank;
+							arNew.memberScore = arOld.memberScore;
+						}
+						
+						if ( !arNew.equals(arOld) ){							
+							arNew.pushToDB(db);
+						}
+					} catch ( Exception e ){
+						arNew.pushToDB(db);
+					}
+					reloadSignal();
+					
+					/*try {
 						ar.pullFromDB(jo.getInt("id"), db);
 						ar.dirty = AnimeRecord.CLEAN;
 						ar.watchedStatus = jo.getString("watched_status");
@@ -283,9 +306,22 @@ public class MALManager extends IntentService {
 					} catch (Exception e) {
 						ar.id = jo.getInt("id");
 						pull(db, ar);
-					}
+					}*/
 
 				}
+				
+				Cursor cur = db.rawQuery("select id from animeList", null);
+
+				if (cur.moveToFirst()) {
+					while (!cur.isAfterLast()) {
+						Long temp =  cur.getLong(cur.getColumnIndex("id"));
+						if ( !pulledIds.contains(temp )){
+							db.execSQL("delete from animeList where id = ".concat(temp.toString()) );
+							reloadSignal();
+						}
+						cur.moveToNext();
+					}
+				}				
 
 				//db.execSQL(getString(R.string.clean));// remove the unclean ones
 
@@ -298,6 +334,7 @@ public class MALManager extends IntentService {
 		}
 		//schedule();
 	}
+	
 	private void syncManga(SQLiteDatabase db) {
 		if (activeConnection) {
 			NotificationManager mManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);

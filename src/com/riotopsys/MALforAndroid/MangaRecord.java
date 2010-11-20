@@ -4,7 +4,6 @@ import org.json.JSONObject;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.text.Html;
 import android.util.Log;
 
 public class MangaRecord extends MALRecord  {
@@ -41,8 +40,8 @@ public class MangaRecord extends MALRecord  {
 	}
 
 	public MangaRecord(JSONObject raw) {
+		super(raw);
 		try {			
-			id = raw.getInt("id");
 			
 			if ( raw.isNull("chapters") ){
 				chapters = 0;
@@ -54,12 +53,6 @@ public class MangaRecord extends MALRecord  {
 				volumes = 0;
 			} else {
 				volumes = raw.getInt("volumes");
-			}
-			
-			if ( raw.isNull("score") ){
-				score = 0;
-			} else {
-				score = raw.getInt("score");
 			}
 			
 			if ( raw.isNull("chapters_read") ){
@@ -74,16 +67,6 @@ public class MangaRecord extends MALRecord  {
 				volumesRead = raw.getInt("volumes_read");
 			}
 			
-			title = Html.fromHtml(raw.getString("title")).toString();
-			type = Html.fromHtml(raw.getString("type")).toString();
-			imageUrl = Html.fromHtml(raw.getString("image_url")).toString();
-			status = Html.fromHtml(raw.getString("status")).toString();
-			watchedStatus = Html.fromHtml(raw.getString("read_status")).toString();
-			memberScore = Html.fromHtml(raw.getString("members_score")).toString();
-			rank = Html.fromHtml(raw.getString("rank")).toString();
-			synopsis = Html.fromHtml(raw.getString("synopsis")).toString();
-
-			dirty = CLEAN;
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "JSON failed", e);
 		}
@@ -150,6 +133,18 @@ public class MangaRecord extends MALRecord  {
 			addQuotes(memberScore) + ", " + 
 			addQuotes(rank) + ", " +
 			addQuotes(synopsis) + " )";
+	}
+	
+	public boolean equals( Object o ){
+		boolean result = super.equals(o); 
+		result &= (o instanceof MangaRecord);
+		if ( result ){
+			result &= ( chapters == ((MangaRecord)o).chapters) ;
+			result &= ( volumes == ((MangaRecord)o).volumes);
+			result &= ( chaptersRead == ((MangaRecord)o).chaptersRead) ;
+			result &= ( volumesRead == ((MangaRecord)o).volumesRead);			
+		}		
+		return result;
 	}
 	
 }
