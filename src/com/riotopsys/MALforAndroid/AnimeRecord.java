@@ -6,6 +6,7 @@ import org.json.JSONObject;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.text.Html;
 import android.util.Log;
 
 public class AnimeRecord extends MALRecord implements Serializable {
@@ -53,6 +54,8 @@ public class AnimeRecord extends MALRecord implements Serializable {
 				watchedEpisodes = raw.getInt("watched_episodes");
 			}
 			
+			watchedStatus = Html.fromHtml(raw.getString("watched_status")).toString();
+			
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "JSON failed", e);
 		}
@@ -74,9 +77,12 @@ public class AnimeRecord extends MALRecord implements Serializable {
 			imageUrl = c.getString(c.getColumnIndex("imageUrl"));
 			status = c.getString(c.getColumnIndex("status"));
 			watchedStatus = c.getString(c.getColumnIndex("watchedStatus"));
-			memberScore = c.getString(c.getColumnIndex("memberScore"));
-			rank = c.getString(c.getColumnIndex("rank"));
-			synopsis = c.getString(c.getColumnIndex("synopsis"));
+			
+			if ( !c.isNull(c.getColumnIndex("memberScore")) ){
+				memberScore = c.getString(c.getColumnIndex("memberScore"));
+				rank = c.getString(c.getColumnIndex("rank"));
+				synopsis = c.getString(c.getColumnIndex("synopsis"));
+			} 
 
 			dirty = c.getInt(c.getColumnIndex("dirty"));
 			c.close();
@@ -92,6 +98,7 @@ public class AnimeRecord extends MALRecord implements Serializable {
 		} catch (Exception e) {
 			Log.i(LOG_NAME, "pushToDB", e);
 		}
+		Log.e(LOG_NAME, "write");
 	}
 
 	private String insertStatement() {

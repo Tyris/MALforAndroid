@@ -48,11 +48,23 @@ public abstract class MALRecord implements Serializable{
 			type = Html.fromHtml(raw.getString("type")).toString();
 			imageUrl = Html.fromHtml(raw.getString("image_url")).toString();
 			status = Html.fromHtml(raw.getString("status")).toString();			
-			watchedStatus = Html.fromHtml(raw.getString("watched_status")).toString();
+			//watchedStatus = Html.fromHtml(raw.getString("watched_status")).toString();
 			
 			rank = Html.fromHtml(raw.getString("rank")).toString();
 			memberScore = Html.fromHtml(raw.getString("members_score")).toString();			
 			synopsis = Html.fromHtml(raw.getString("synopsis")).toString();
+			if ( rank.equals("null")){
+				rank = null;
+			}
+			
+			if ( memberScore.equals("null")){
+				memberScore = null;
+			}
+			
+			if ( synopsis.equals("null")){
+				synopsis = null;
+			}
+			
 
 			dirty = CLEAN;
 		} catch (Exception e) {
@@ -73,10 +85,12 @@ public abstract class MALRecord implements Serializable{
 			result &= title.equals(((MALRecord)o).title);
 			result &= imageUrl.equals(((MALRecord)o).imageUrl);
 			result &= status.equals(((MALRecord)o).status);
-			result &= memberScore.equals(((MALRecord)o).memberScore);
-			result &= rank.equals(((MALRecord)o).rank);
-			result &= synopsis.equals(((MALRecord)o).synopsis);
-			result &= type.equals(((MALRecord)o).type);			
+			result &= type.equals(((MALRecord)o).type);
+			
+			//result &= memberScore.equals(((MALRecord)o).memberScore);
+			//result &= rank.equals(((MALRecord)o).rank);
+			//result &= synopsis.equals(((MALRecord)o).synopsis);
+						
 		}		
 		return result;
 	}

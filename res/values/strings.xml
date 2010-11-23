@@ -217,6 +217,7 @@ CREATE TABLE if not exists `mangaList` (
     	<item>Hourly</item>
     	<item>4 per Day</item>
     	<item>Daily</item>
+    	<item>On Demand</item>
     </string-array>
     
     <string-array name="delays">
@@ -224,6 +225,7 @@ CREATE TABLE if not exists `mangaList` (
         <item>3600000</item>
         <item>14400000</item>
         <item>86400000</item>
+        <item>-1</item>
     </string-array>
     	
 </resources>

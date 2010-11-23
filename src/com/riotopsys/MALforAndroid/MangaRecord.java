@@ -4,6 +4,7 @@ import org.json.JSONObject;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.text.Html;
 import android.util.Log;
 
 public class MangaRecord extends MALRecord  {
@@ -67,6 +68,9 @@ public class MangaRecord extends MALRecord  {
 				volumesRead = raw.getInt("volumes_read");
 			}
 			
+			watchedStatus = Html.fromHtml(raw.getString("read_status")).toString();
+			
+			
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "JSON failed", e);
 		}
@@ -95,10 +99,13 @@ public class MangaRecord extends MALRecord  {
 			imageUrl = c.getString(c.getColumnIndex("imageUrl"));
 			status = c.getString(c.getColumnIndex("status"));
 			watchedStatus = c.getString(c.getColumnIndex("watchedStatus"));
-			memberScore = c.getString(c.getColumnIndex("memberScore"));
-			rank = c.getString(c.getColumnIndex("rank"));
-			synopsis = c.getString(c.getColumnIndex("synopsis"));
-
+			
+			if ( c.isNull(c.getColumnIndex("memberScore")) ){
+				memberScore = c.getString(c.getColumnIndex("memberScore"));
+				rank = c.getString(c.getColumnIndex("rank"));
+				synopsis = c.getString(c.getColumnIndex("synopsis"));
+			} 
+			
 			dirty = c.getInt(c.getColumnIndex("dirty"));
 			c.close();
 		} else {
@@ -114,6 +121,7 @@ public class MangaRecord extends MALRecord  {
 		} catch (Exception e) {
 			Log.i(LOG_NAME, "pushToDB", e);			
 		}
+		Log.e(LOG_NAME, "write");
 	}
 
 	private String insertStatement() {

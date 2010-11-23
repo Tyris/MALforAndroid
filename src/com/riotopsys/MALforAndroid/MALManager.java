@@ -108,7 +108,9 @@ public class MALManager extends IntentService {
 		} else if (s.equals(PULL)) {
 			pull(db, ar);
 		} else if (s.equals(SYNC)) {
-			sync(db);
+			pushDirty(db);
+			sync(db,true);
+			sync(db,false);
 		} else if (s.equals(ADD)) {
 			add(db, ar);
 		} else if (s.equals(REMOVE)) {
@@ -118,7 +120,7 @@ public class MALManager extends IntentService {
 		} else if (s.equals(IMAGE)) {
 			pullImage(db, ar);
 		} else if (s.equals(SCHEDULE)) {
-			schedule( true );
+			schedule(true);
 		} else {
 			Log.i("MALManager", "unknown intent: " + s);
 		}
@@ -130,11 +132,11 @@ public class MALManager extends IntentService {
 			long id = ar.id;
 			StringBuffer sb = new StringBuffer();
 			URL url;
-			
-			Boolean isAnime = ( ar instanceof AnimeRecord );
-			
+
+			Boolean isAnime = (ar instanceof AnimeRecord);
+
 			try {
-				if ( isAnime ){
+				if (isAnime) {
 					url = new URL("http://" + api + "/animelist/anime/" + String.valueOf(id));
 				} else {
 					url = new URL("http://" + api + "/mangalist/manga/" + String.valueOf(id));
@@ -149,11 +151,11 @@ public class MALManager extends IntentService {
 
 				// sb.append( "_method=PUT\n" );
 				sb.append("status=").append(ar.watchedStatus);
-				if ( isAnime ){
-					sb.append("&").append("episodes=").append(String.valueOf(((AnimeRecord)ar).watchedEpisodes));
+				if (isAnime) {
+					sb.append("&").append("episodes=").append(String.valueOf(((AnimeRecord) ar).watchedEpisodes));
 				} else {
-					sb.append("&").append("chapters=").append(String.valueOf(((MangaRecord)ar).chaptersRead));
-					sb.append("&").append("volumes=").append(String.valueOf(((MangaRecord)ar).volumesRead));
+					sb.append("&").append("chapters=").append(String.valueOf(((MangaRecord) ar).chaptersRead));
+					sb.append("&").append("volumes=").append(String.valueOf(((MangaRecord) ar).volumesRead));
 				}
 				sb.append("&").append("score=").append(String.valueOf(ar.score));
 
@@ -181,7 +183,7 @@ public class MALManager extends IntentService {
 				URL url;
 				try {
 					// http://mal-api.com/anime/53?format=xml&mine=1
-					if ( ar instanceof AnimeRecord ){
+					if (ar instanceof AnimeRecord) {
 						url = new URL("http://" + api + "/anime/" + String.valueOf(id) + "?mine=1");
 					} else {
 						url = new URL("http://" + api + "/manga/" + String.valueOf(id) + "?mine=1");
@@ -201,9 +203,9 @@ public class MALManager extends IntentService {
 					rd.close();
 
 					JSONObject raw = new JSONObject(sb.toString());
-					
+
 					MALRecord newRec;
-					if ( ar instanceof AnimeRecord ){
+					if (ar instanceof AnimeRecord) {
 						newRec = new AnimeRecord(raw);
 					} else {
 						newRec = new MangaRecord(raw);
@@ -223,16 +225,15 @@ public class MALManager extends IntentService {
 		}
 	}
 
-	private void sync(SQLiteDatabase db) {
-		pushDirty(db);
-		//db.execSQL(getString(R.string.dirty));// all is dirt		
-		syncAnime(db);
-		syncManga(db);
-		//db.execSQL(getString(R.string.clean));// remove the unclean ones
-		schedule(false);
-	}
-		
-	private void syncAnime(SQLiteDatabase db) {
+	/*
+	 * private void sync(SQLiteDatabase db) { pushDirty(db); //
+	 * db.execSQL(getString(R.string.dirty));// all is dirt syncAnime(db);
+	 * syncManga(db); // db.execSQL(getString(R.string.clean));// remove the
+	 * unclean ones schedule(false); }
+	 */
+
+	// private void syncAnime(SQLiteDatabase db) {
+	private void sync(SQLiteDatabase db, boolean anime) {
 		if (activeConnection) {
 			NotificationManager mManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 			Intent intent = new Intent(this, main.class);
@@ -245,16 +246,14 @@ public class MALManager extends IntentService {
 
 			mManager.notify(0, notification);
 
-			//pushDirty(db);
-
-			//AnimeRecord ar = new AnimeRecord();
 			try {
 
-				//db.execSQL(getString(R.string.dirty));// all is dirt
-
-				URL url = new URL("http://" + api + "/animelist/" + user);
-				// InputSource in = new InputSource(new
-				// InputStreamReader(url.openStream()));
+				URL url;
+				if (anime) {
+					url = new URL("http://" + api + "/animelist/" + user);
+				} else {
+					url = new URL("http://" + api + "/mangalist/" + user);
+				}
 
 				BufferedReader rd = new BufferedReader(new InputStreamReader(url.openConnection().getInputStream()), 512);
 				String line;
@@ -263,154 +262,155 @@ public class MALManager extends IntentService {
 					sb.append(line);
 				}
 				rd.close();
-				
+
 				JSONObject raw = new JSONObject(sb.toString());
-				JSONArray array = raw.getJSONArray("anime");
-				
+				JSONArray array;
+				if (anime) {
+					array = raw.getJSONArray("anime");
+				} else {
+					array = raw.getJSONArray("manga");
+				}
+
 				LinkedList<Long> pulledIds = new LinkedList<Long>();
-				
+
 				for (int c = 0; c < array.length(); c++) {
 					JSONObject jo = array.getJSONObject(c);
 
 					notification.setLatestEventInfo(this, "MAL for Android: " + String.valueOf(c + 1) + "/" + String.valueOf(array.length()),
 							Html.fromHtml(jo.getString("title")).toString(), pi);
 					mManager.notify(0, notification);
-													
-					AnimeRecord arNew = new AnimeRecord(jo);
+
+					MALRecord arNew; 
+					if (anime) {
+						arNew = new AnimeRecord(jo);
+					} else {
+						arNew = new MangaRecord(jo);
+					}
+					
 					pulledIds.add(new Long(arNew.id));
 					try {
-						AnimeRecord arOld = new AnimeRecord(arNew.id, db);
-						
-						if ( !arOld.synopsis.equals("") ){
+						MALRecord arOld;
+						if (anime) {
+							arOld = new AnimeRecord(arNew.id, db);
+						} else {
+							arOld = new MangaRecord(arNew.id, db);
+						}
+
+						if (arOld.synopsis != null) {
 							arNew.synopsis = arOld.synopsis;
 							arNew.rank = arOld.rank;
 							arNew.memberScore = arOld.memberScore;
 						}
-						
-						if ( !arNew.equals(arOld) ){							
+
+						if (!arNew.equals(arOld)) {
 							arNew.pushToDB(db);
+							reloadSignal();
 						}
-					} catch ( Exception e ){
-						arNew.pushToDB(db);
-					}
-					reloadSignal();
-					
-					/*try {
-						ar.pullFromDB(jo.getInt("id"), db);
-						ar.dirty = AnimeRecord.CLEAN;
-						ar.watchedStatus = jo.getString("watched_status");
-						ar.score = jo.getInt("score");
-						ar.watchedEpisodes = jo.getInt("watched_episodes");
-						ar.pushToDB(db);
-						reloadSignal();
 					} catch (Exception e) {
-						ar.id = jo.getInt("id");
-						pull(db, ar);
-					}*/
+						arNew.pushToDB(db);
+						reloadSignal();
+					}
 
 				}
-				
-				Cursor cur = db.rawQuery("select id from animeList", null);
+
+				Cursor cur;
+				if (anime) {
+					cur = db.rawQuery("select id from animeList", null);
+				} else {
+					cur = db.rawQuery("select id from mangaList", null);
+				}
 
 				if (cur.moveToFirst()) {
 					while (!cur.isAfterLast()) {
-						Long temp =  cur.getLong(cur.getColumnIndex("id"));
-						if ( !pulledIds.contains(temp )){
-							db.execSQL("delete from animeList where id = ".concat(temp.toString()) );
+						Long temp = cur.getLong(cur.getColumnIndex("id"));
+						if (!pulledIds.contains(temp)) {
+							if (anime) {
+								db.execSQL("delete from animeList where id = ".concat(temp.toString()));
+							} else {
+								db.execSQL("delete from mangaList where id = ".concat(temp.toString()));
+							}							
 							reloadSignal();
 						}
 						cur.moveToNext();
 					}
-				}				
-
-				//db.execSQL(getString(R.string.clean));// remove the unclean ones
+				}
+				
+				cur.close();
+				mManager.cancelAll();
 
 			} catch (Exception e) {
 				mManager.cancelAll();
 				errorNotification();
 				Log.e(LOG_NAME, "Sync failed", e);
 			}
-			
+
 		}
-		//schedule();
+		// schedule();
 	}
-	
-	private void syncManga(SQLiteDatabase db) {
-		if (activeConnection) {
-			NotificationManager mManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-			Intent intent = new Intent(this, main.class);
-			PendingIntent pi = PendingIntent.getService(this, 0, intent, 0);
 
-			Notification notification = new Notification(R.drawable.icon, "Synchonizing", System.currentTimeMillis());
-			notification.setLatestEventInfo(this, getString(R.string.app_name), getString(R.string.pullManga), pi);
-
-			notification.flags |= Notification.FLAG_NO_CLEAR;
-
-			mManager.notify(0, notification);
-
-			//pushDirty(db);
-
-			MangaRecord mr = new MangaRecord();
-			try {
-
-				//db.execSQL(getString(R.string.dirty));// all is dirt
-
-				URL url = new URL("http://" + api + "/mangalist/" + user);
-				// InputSource in = new InputSource(new
-				// InputStreamReader(url.openStream()));
-
-				BufferedReader rd = new BufferedReader(new InputStreamReader(url.openConnection().getInputStream()), 512);
-				String line;
-				StringBuffer sb = new StringBuffer();
-				while ((line = rd.readLine()) != null) {
-					sb.append(line);
-				}
-				rd.close();
-
-				JSONObject raw = new JSONObject(sb.toString());
-				JSONArray array = raw.getJSONArray("manga");				
-				for (int c = 0; c < array.length(); c++) {
-					JSONObject jo = array.getJSONObject(c);
-
-					notification.setLatestEventInfo(this, "MAL for Android: " + String.valueOf(c + 1) + "/" + String.valueOf(array.length()),
-							Html.fromHtml(jo.getString("title")).toString(), pi);
-					mManager.notify(0, notification);
-
-					try {
-						mr.pullFromDB(jo.getInt("id"), db);
-						mr.dirty = AnimeRecord.CLEAN;
-						mr.watchedStatus = jo.getString("read_status");
-						mr.score = jo.getInt("score");
-						mr.chaptersRead = jo.getInt("chapters_read");
-						mr.volumesRead = jo.getInt("volumes_read");
-						
-						mr.pushToDB(db);
-						reloadSignal();
-					} catch (Exception e) {
-						mr.id = jo.getInt("id");
-						pull(db, mr);
-					}
-
-				}
-
-				//db.execSQL(getString(R.string.clean));// remove the unclean ones
-
-			} catch (Exception e) {
-				errorNotification();
-				Log.e(LOG_NAME, "Sync failed", e);
-			}
-
-			mManager.cancelAll();
-		}
-		//schedule();
-	}
+	/*
+	 * private void syncManga(SQLiteDatabase db) { if (activeConnection) {
+	 * NotificationManager mManager = (NotificationManager)
+	 * getSystemService(Context.NOTIFICATION_SERVICE); Intent intent = new
+	 * Intent(this, main.class); PendingIntent pi =
+	 * PendingIntent.getService(this, 0, intent, 0);
+	 * 
+	 * Notification notification = new Notification(R.drawable.icon,
+	 * "Synchonizing", System.currentTimeMillis());
+	 * notification.setLatestEventInfo(this, getString(R.string.app_name),
+	 * getString(R.string.pullManga), pi);
+	 * 
+	 * notification.flags |= Notification.FLAG_NO_CLEAR;
+	 * 
+	 * mManager.notify(0, notification);
+	 * 
+	 * // pushDirty(db);
+	 * 
+	 * MangaRecord mr = new MangaRecord(); try {
+	 * 
+	 * // db.execSQL(getString(R.string.dirty));// all is dirt
+	 * 
+	 * URL url = new URL("http://" + api + "/mangalist/" + user); // InputSource
+	 * in = new InputSource(new // InputStreamReader(url.openStream()));
+	 * 
+	 * BufferedReader rd = new BufferedReader(new
+	 * InputStreamReader(url.openConnection().getInputStream()), 512); String
+	 * line; StringBuffer sb = new StringBuffer(); while ((line = rd.readLine())
+	 * != null) { sb.append(line); } rd.close();
+	 * 
+	 * JSONObject raw = new JSONObject(sb.toString()); JSONArray array =
+	 * raw.getJSONArray("manga"); for (int c = 0; c < array.length(); c++) {
+	 * JSONObject jo = array.getJSONObject(c);
+	 * 
+	 * notification.setLatestEventInfo(this, "MAL for Android: " +
+	 * String.valueOf(c + 1) + "/" + String.valueOf(array.length()),
+	 * Html.fromHtml(jo.getString("title")).toString(), pi); mManager.notify(0,
+	 * notification);
+	 * 
+	 * try { mr.pullFromDB(jo.getInt("id"), db); mr.dirty = AnimeRecord.CLEAN;
+	 * mr.watchedStatus = jo.getString("read_status"); mr.score =
+	 * jo.getInt("score"); mr.chaptersRead = jo.getInt("chapters_read");
+	 * mr.volumesRead = jo.getInt("volumes_read");
+	 * 
+	 * mr.pushToDB(db); reloadSignal(); } catch (Exception e) { mr.id =
+	 * jo.getInt("id"); pull(db, mr); }
+	 * 
+	 * }
+	 * 
+	 * // db.execSQL(getString(R.string.clean));// remove the unclean // ones
+	 * 
+	 * } catch (Exception e) { errorNotification(); Log.e(LOG_NAME,
+	 * "Sync failed", e); }
+	 * 
+	 * mManager.cancelAll(); } // schedule(); }
+	 */
 
 	private void add(SQLiteDatabase db, MALRecord ar) {
 		String ws = ar.watchedStatus;
 		if (activeConnection) {
 			try {
 				URL url;
-				if ( ar instanceof AnimeRecord ){
+				if (ar instanceof AnimeRecord) {
 					url = new URL("http://" + api + "/animelist/anime");
 				} else {
 					url = new URL("http://" + api + "/mangalist/manga");
@@ -425,7 +425,7 @@ public class MALManager extends IntentService {
 
 				// sb.append( "_method=PUT\n" );
 				StringBuffer sb = new StringBuffer();
-				if ( ar instanceof AnimeRecord ){
+				if (ar instanceof AnimeRecord) {
 					sb.append("anime_id=");
 				} else {
 					sb.append("manga_id=");
@@ -462,7 +462,7 @@ public class MALManager extends IntentService {
 		if (activeConnection) {
 			try {
 				URL url;
-				if ( ar instanceof AnimeRecord ){
+				if (ar instanceof AnimeRecord) {
 					url = new URL("http://" + api + "/animelist/anime/" + String.valueOf(ar.id));
 				} else {
 					url = new URL("http://" + api + "/mangalist/manga/" + String.valueOf(ar.id));
@@ -477,7 +477,7 @@ public class MALManager extends IntentService {
 				con.connect();
 
 				if (con.getResponseCode() == 200) {
-					if ( ar instanceof AnimeRecord ){
+					if (ar instanceof AnimeRecord) {
 						db.execSQL("delete from animeList where id = " + String.valueOf(ar.id));
 					} else {
 						db.execSQL("delete from mangaList where id = " + String.valueOf(ar.id));
@@ -507,11 +507,15 @@ public class MALManager extends IntentService {
 
 				File root = Environment.getExternalStorageDirectory();
 				File file;
-				if ( ar instanceof AnimeRecord ){
-					//file = new File(root, "Android/data/com.riotopsys.MALForAndroid/images/anime/" + String.valueOf(ar.id));
+				if (ar instanceof AnimeRecord) {
+					// file = new File(root,
+					// "Android/data/com.riotopsys.MALForAndroid/images/anime/"
+					// + String.valueOf(ar.id));
 					file = new File(root, getString(R.string.imagePathAnime) + String.valueOf(ar.id));
 				} else {
-					//file = new File(root, "Android/data/com.riotopsys.MALForAndroid/images/manga/" + String.valueOf(ar.id));
+					// file = new File(root,
+					// "Android/data/com.riotopsys.MALForAndroid/images/manga/"
+					// + String.valueOf(ar.id));
 					file = new File(root, getString(R.string.imagePathManga) + String.valueOf(ar.id));
 				}
 				file.mkdirs();
@@ -557,8 +561,8 @@ public class MALManager extends IntentService {
 
 				try {
 					MALRecord ar;
-					
-					if ( c.getInt(c.getColumnIndex("type")) == 1 ) {
+
+					if (c.getInt(c.getColumnIndex("type")) == 1) {
 						ar = new AnimeRecord(c.getInt(c.getColumnIndex("id")), db);
 					} else {
 						ar = new MangaRecord(c.getInt(c.getColumnIndex("id")), db);
@@ -605,7 +609,7 @@ public class MALManager extends IntentService {
 				}
 			}
 		}
-		
+
 		c.close();
 		reloadSignal();
 	}
@@ -620,23 +624,30 @@ public class MALManager extends IntentService {
 		AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
 
 		int interval = Integer.parseInt(perfs.getString("updateFreq", "14400000"));
+		
 		long firstTime = SystemClock.elapsedRealtime() + interval;
 
 		Intent i = new Intent(this, MALManager.class);
 		i.setAction(SYNC);
 		PendingIntent mAlarmSender = PendingIntent.getService(this, 0, i, PendingIntent.FLAG_NO_CREATE);
-		if (mAlarmSender == null ) {
-			mAlarmSender = PendingIntent.getService(this, 0, i, 0);
+		
+		if (interval != -1) {
 			
-			am.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, firstTime, interval, mAlarmSender);
+			if (mAlarmSender == null) {
+				mAlarmSender = PendingIntent.getService(this, 0, i, 0);
 
-			Log.i(LOG_NAME, "schedule set");
-		} else if ( createNew ){
-			
+				am.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, firstTime, interval, mAlarmSender);
+
+				Log.i(LOG_NAME, "schedule set");
+			} else if (createNew) {
+
+				am.cancel(mAlarmSender);
+
+				am.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, firstTime, interval, mAlarmSender);
+
+			}
+		} else{
 			am.cancel(mAlarmSender);
-			
-			am.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, firstTime, interval, mAlarmSender);
-			
 		}
 	}
 
@@ -655,7 +666,7 @@ public class MALManager extends IntentService {
 		db.close();
 		return ar;
 	}
-	
+
 	public static MangaRecord getManga(long id, Context c) {
 
 		MALSqlHelper openHelper = new MALSqlHelper(c);
@@ -710,7 +721,7 @@ public class MALManager extends IntentService {
 
 		Notification notification = new Notification(R.drawable.icon, getResources().getString(R.string.connectError), System.currentTimeMillis());
 		notification.setLatestEventInfo(this, "MAL for Android", getResources().getString(R.string.connectError), pi);
-		
+
 		mManager.notify(0, notification);
 	}
 
