@@ -100,7 +100,7 @@ public class MangaRecord extends MALRecord  {
 			status = c.getString(c.getColumnIndex("status"));
 			watchedStatus = c.getString(c.getColumnIndex("watchedStatus"));
 			
-			if ( c.isNull(c.getColumnIndex("memberScore")) ){
+			if ( !c.isNull(c.getColumnIndex("memberScore")) ){
 				memberScore = c.getString(c.getColumnIndex("memberScore"));
 				rank = c.getString(c.getColumnIndex("rank"));
 				synopsis = c.getString(c.getColumnIndex("synopsis"));
