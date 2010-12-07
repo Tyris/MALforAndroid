@@ -7,6 +7,8 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
@@ -32,7 +34,6 @@ import android.os.Environment;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.text.Html;
-import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -79,6 +80,40 @@ public class MALManager extends IntentService {
 		super(LOG_NAME);
 	}
 
+	@SuppressWarnings("rawtypes")
+	private static String encodeCred(String user, String pass) {
+		Class b64;
+		Object retobj = null;
+		try {
+			/*
+			 * this whole mess is equivalent to
+			 * cred = Base64.encodeToString((user + ":" + pass).getBytes(), Base64.NOWRAP); 
+			 * on version 2.2 of the android api
+			 * but if not available it will default to the 
+			 * Robert Harder implementation.
+			 */
+			b64 = Class.forName("android.util.Base64");
+			Class param[] = new Class[2];
+			param[0] = pass.getBytes().getClass();
+			param[1] = Integer.TYPE;
+			Method m = b64.getMethod("encodeToString", param);
+
+			Field f = b64.getField("NO_WRAP");
+
+			Object arglist[] = new Object[2];
+			arglist[0] = (user + ":" + pass).getBytes();
+			// arglist[1] = new Integer(0x2);
+			arglist[1] = f.getInt(null);
+			retobj = m.invoke(null, arglist);
+
+			// cred = (String)retobj;
+			Log.i("MALManager", "reflection android.util.Base64 found");
+		} catch (Exception e) {
+			retobj = Base64.encodeBytes((user + ":" + pass).getBytes());
+		}
+		return (String) retobj;
+	}
+
 	@Override
 	protected void onHandleIntent(Intent intent) {
 		String s = intent.getAction();
@@ -96,7 +131,9 @@ public class MALManager extends IntentService {
 		api = perfs.getString("api", "");
 		pass = perfs.getString("passwd", "");
 
-		cred = Base64.encodeToString((user + ":" + pass).getBytes(), Base64.DEFAULT | Base64.NO_WRAP);
+		cred = encodeCred(user, pass);
+		// cred = Base64.encodeToString((user + ":" + pass).getBytes(),
+		// Base64.DEFAULT | Base64.NOWRAP);
 
 		ConnectivityManager connect = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 		activeConnection = (connect.getNetworkInfo(0).isConnected() || connect.getNetworkInfo(1).isConnected());
@@ -109,8 +146,8 @@ public class MALManager extends IntentService {
 			pull(db, ar);
 		} else if (s.equals(SYNC)) {
 			pushDirty(db);
-			sync(db,true);
-			sync(db,false);
+			sync(db, true);
+			sync(db, false);
 		} else if (s.equals(ADD)) {
 			add(db, ar);
 		} else if (s.equals(REMOVE)) {
@@ -280,13 +317,13 @@ public class MALManager extends IntentService {
 							Html.fromHtml(jo.getString("title")).toString(), pi);
 					mManager.notify(0, notification);
 
-					MALRecord arNew; 
+					MALRecord arNew;
 					if (anime) {
 						arNew = new AnimeRecord(jo);
 					} else {
 						arNew = new MangaRecord(jo);
 					}
-					
+
 					pulledIds.add(new Long(arNew.id));
 					try {
 						MALRecord arOld;
@@ -328,13 +365,13 @@ public class MALManager extends IntentService {
 								db.execSQL("delete from animeList where id = ".concat(temp.toString()));
 							} else {
 								db.execSQL("delete from mangaList where id = ".concat(temp.toString()));
-							}							
+							}
 							reloadSignal();
 						}
 						cur.moveToNext();
 					}
 				}
-				
+
 				cur.close();
 				mManager.cancelAll();
 
@@ -570,7 +607,7 @@ public class MALManager extends IntentService {
 
 					switch (ar.dirty) {
 						case AnimeRecord.CLEAN:
-							Log.wtf(LOG_NAME, "WTF I said no 0");
+							Log.e(LOG_NAME, "WTF I said no 0");
 							break;
 						case AnimeRecord.UPDATING:
 							// only seen during an update
@@ -624,15 +661,15 @@ public class MALManager extends IntentService {
 		AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
 
 		int interval = Integer.parseInt(perfs.getString("updateFreq", "14400000"));
-		
+
 		long firstTime = SystemClock.elapsedRealtime() + interval;
 
 		Intent i = new Intent(this, MALManager.class);
 		i.setAction(SYNC);
 		PendingIntent mAlarmSender = PendingIntent.getService(this, 0, i, PendingIntent.FLAG_NO_CREATE);
-		
+
 		if (interval != -1) {
-			
+
 			if (mAlarmSender == null) {
 				mAlarmSender = PendingIntent.getService(this, 0, i, 0);
 
@@ -646,7 +683,7 @@ public class MALManager extends IntentService {
 				am.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, firstTime, interval, mAlarmSender);
 
 			}
-		} else{
+		} else {
 			am.cancel(mAlarmSender);
 		}
 	}
@@ -689,7 +726,9 @@ public class MALManager extends IntentService {
 		String api = perfs.getString("api", "");
 		String pass = perfs.getString("passwd", "");
 
-		String cred = Base64.encodeToString((user + ":" + pass).getBytes(), Base64.DEFAULT | Base64.NO_WRAP);
+		String cred = encodeCred(user, pass);
+		// String cred = Base64.encodeToString((user + ":" + pass).getBytes(),
+		// Base64.DEFAULT | Base64.NO_WRAP);
 
 		Boolean result = false;
 
