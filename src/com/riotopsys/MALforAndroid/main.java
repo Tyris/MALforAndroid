@@ -8,7 +8,6 @@ import android.content.DialogInterface.OnDismissListener;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
@@ -50,7 +49,6 @@ public class main extends Activity {
 	private IntegerPicker ipVolumes;
 	private MALRecord longClickRecord;
 
-	private PerfChange pfChang;
 
 	private boolean animeMode;
 
@@ -63,8 +61,7 @@ public class main extends Activity {
 		setContentView(R.layout.main);
 
 		PreferenceManager.setDefaultValues(this, R.xml.preferances, false);
-		SharedPreferences perfs = PreferenceManager.getDefaultSharedPreferences(this);
-		pfChang = new PerfChange();
+		SharedPreferences perfs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());		
 
 		title = (TextView) findViewById(R.id.mainTitle);
 		lv = (ListView) findViewById(R.id.lv);
@@ -97,7 +94,6 @@ public class main extends Activity {
 			lastChoice = Integer.valueOf(perfs.getString("filter", "0"));
 		}
 
-		perfs.registerOnSharedPreferenceChangeListener(pfChang);
 
 		adapter = new SimpleCursorAdapter(this, R.layout.mal_item, null, new String[] { "title", "watchedEpisodes", "episodes", "score" }, new int[] {
 				R.id.title, R.id.complete, R.id.total, R.id.score });
@@ -457,31 +453,5 @@ public class main extends Activity {
 
 			}
 		}
-	}
-
-	private class PerfChange implements OnSharedPreferenceChangeListener {
-		@Override
-		public void onSharedPreferenceChanged(SharedPreferences arg0, String key) {
-			if (key.equals("userName") || key.equals("passwd")) {
-				if (MALManager.verifyCredentials(getBaseContext())) {
-					Toast.makeText(getBaseContext(), R.string.firstSync, Toast.LENGTH_LONG * 2).show();
-					Intent i = new Intent(getBaseContext(), MALManager.class);
-					i.setAction(MALManager.SYNC);
-					startService(i);
-				} else {
-					Log.i(LOG_NAME, "verifyCredentials: failed");
-				}
-			} else {
-				Log.i(LOG_NAME, "Credentials changed");
-			}
-			if (key.equals("updateFreq")) {
-				Log.i(LOG_NAME, "chg sync");
-				Intent i = new Intent(getBaseContext(), MALManager.class);
-				i.setAction(MALManager.SCHEDULE);
-				getBaseContext().startService(i);
-			}
-		}
-
-	}
-
+	}	
 }
