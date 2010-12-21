@@ -155,7 +155,7 @@ public class AnimeDetail extends Activity {
 			case R.id.detailMenuDelete:
 				i = new Intent(this, MALManager.class);
 				b = new Bundle();
-				b.putSerializable("anime", ar);
+				b.putSerializable("media", ar);
 				i.putExtras(b);
 				i.setAction(MALManager.REMOVE);
 				startService(i);
@@ -166,14 +166,14 @@ public class AnimeDetail extends Activity {
 			case R.id.detailMenuSync:
 				i = new Intent(this, MALManager.class);
 				b = new Bundle();
-				b.putSerializable("anime", ar);
+				b.putSerializable("media", ar);
 				i.putExtras(b);
 				i.setAction(MALManager.PULL);
 				startService(i);
 
 				i = new Intent(this, MALManager.class);
 				b = new Bundle();
-				b.putSerializable("anime", ar);
+				b.putSerializable("media", ar);
 				i.putExtras(b);
 				i.setAction(MALManager.IMAGE);
 				startService(i);

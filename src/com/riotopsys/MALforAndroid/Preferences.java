@@ -14,8 +14,6 @@ public class Preferences extends PreferenceActivity {
 
 	private final static String LOG_NAME = "Preferences.java";
 
-	// private PerfChange pfChang;
-
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
