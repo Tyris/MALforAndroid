@@ -7,8 +7,10 @@ import java.io.FileNotFoundException;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.DialogInterface.OnDismissListener;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -42,6 +44,10 @@ public class AnimeDetail extends Activity {
 	// private long id;
 	private MALRecord ar;
 	private Reciever rec;
+	
+	private IntegerPicker ipWatched;
+	private IntegerPicker ipScore;
+	private IntegerPicker ipVolumes;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -71,6 +77,22 @@ public class AnimeDetail extends Activity {
 		Bundle b = getIntent().getExtras();
 
 		ar = (MALRecord) b.getSerializable("media");
+		
+		ipWatched = new IntegerPicker(this);
+		ipWatched.setOnDismissListener(new WatchDismissed());
+		ipVolumes = new IntegerPicker(this);
+		ipVolumes.setOnDismissListener(new VolumesDismissed());
+
+		ipScore = new IntegerPicker(this);
+		ipScore.setTitle("Set Score");
+		ipScore.setLimits(0, 10);
+		ipScore.setOnDismissListener(new ScoreDismissed());
+		
+		if ( ar instanceof AnimeRecord ) {
+			ipWatched.setTitle("Episodes Watched");			
+		} else {
+			ipWatched.setTitle("Chapter Read");			
+		}
 
 		display();
 
@@ -136,11 +158,15 @@ public class AnimeDetail extends Activity {
 			startService(i);
 		}
 	}
-
+	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.menu.detail, menu);
+		if ( ar instanceof AnimeRecord ){
+			inflater.inflate(R.menu.detail, menu);
+		} else {
+			inflater.inflate(R.menu.detail_manga, menu);
+		}
 		return true;
 	}
 
@@ -148,6 +174,10 @@ public class AnimeDetail extends Activity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		int itemId = item.getItemId();
 
+		boolean postIntent = false;
+		int totalEp;
+		int completed;
+		
 		Intent i;
 		Bundle b;
 
@@ -178,7 +208,83 @@ public class AnimeDetail extends Activity {
 				i.setAction(MALManager.IMAGE);
 				startService(i);
 				break;
+			case R.id.itemStatusCompleted:
+				ar.watchedStatus = "completed";
+				postIntent = true;
+				break;
+			case R.id.itemStatusReading:
+				ar.watchedStatus = "reading";
+				postIntent = true;
+				break;
+			case R.id.itemStatusDropped:
+				ar.watchedStatus = "dropped";
+				postIntent = true;
+				break;
+			case R.id.itemStatusOnHold:
+				ar.watchedStatus = "on-hold";
+				postIntent = true;
+				break;
+			case R.id.itemStatusPlantoWatch:
+				ar.watchedStatus = "plan to watch";
+				postIntent = true;
+				break;
+			case R.id.itemStatusPlantoRead:
+				ar.watchedStatus = "plan to read";
+				postIntent = true;
+				break;
+			case R.id.itemStatusWatching:
+				ar.watchedStatus = "watching";
+				postIntent = true;
+				break;
+			case R.id.setWatched:
+				if (ar instanceof AnimeRecord) {
+					totalEp = ((AnimeRecord) ar).episodes;
+					completed = ((AnimeRecord) ar).watchedEpisodes;
+				} else {
+					totalEp = ((MangaRecord) ar).chapters;
+					completed = ((MangaRecord) ar).chaptersRead;
+				}
+
+				if (totalEp == 0) {
+					totalEp = Integer.MAX_VALUE;
+				}
+				ipWatched.setLimits(0, totalEp);
+				ipWatched.setCurrent(completed);
+				ipWatched.show();
+
+				break;
+			case R.id.setVolumeRead:
+
+				totalEp = ((MangaRecord) ar).volumes;
+				completed = ((MangaRecord) ar).volumesRead;
+
+				if (totalEp == 0) {
+					totalEp = Integer.MAX_VALUE;
+				}
+				ipVolumes.setLimits(0, totalEp);
+				ipVolumes.setCurrent(completed);
+				ipVolumes.show();
+
+				break;
+			case R.id.setScore:
+
+				ipScore.setLimits(0, 10);
+				ipScore.setCurrent(ar.score);
+				ipScore.show();
+
+				break;
+				
 		}
+		
+		if (postIntent) {
+			i = new Intent(this, MALManager.class);
+			i.setAction(MALManager.CHANGE);
+			b = new Bundle();
+			b.putSerializable("media", ar);
+			i.putExtras(b);
+			startService(i);
+		}
+		
 		return true;
 	}
 
@@ -207,5 +313,63 @@ public class AnimeDetail extends Activity {
 		}
 
 	}
+	
+	private class WatchDismissed implements OnDismissListener {
+		@Override
+		public void onDismiss(DialogInterface dialog) {
+			if (!ipWatched.wasCanceled()) {
 
+				Intent i = new Intent(getBaseContext(), MALManager.class);
+				i.setAction(MALManager.CHANGE);
+				Bundle b = new Bundle();
+				if (ar instanceof AnimeRecord) {
+					((AnimeRecord) ar).watchedEpisodes = ipWatched.getCurrent();
+				} else {
+					((MangaRecord) ar).chaptersRead = ipWatched.getCurrent();
+				}
+				b.putSerializable("media", ar);
+
+				i.putExtras(b);
+				startService(i);
+
+			}
+		}
+	}
+
+	private class VolumesDismissed implements OnDismissListener {
+		@Override
+		public void onDismiss(DialogInterface dialog) {
+			if (!ipVolumes.wasCanceled()) {
+
+				Intent i = new Intent(getBaseContext(), MALManager.class);
+				i.setAction(MALManager.CHANGE);
+				Bundle b = new Bundle();
+
+				((MangaRecord) ar).volumesRead = ipVolumes.getCurrent();
+				b.putSerializable("media", ar);
+
+				i.putExtras(b);
+				startService(i);
+
+			}
+		}
+	}
+
+	private class ScoreDismissed implements OnDismissListener {
+		@Override
+		public void onDismiss(DialogInterface dialog) {
+			if (!ipScore.wasCanceled()) {
+
+				Intent i = new Intent(getBaseContext(), MALManager.class);
+				i.setAction(MALManager.CHANGE);
+				Bundle b = new Bundle();
+				ar.score = ipScore.getCurrent();
+				b.putSerializable("media", ar);
+
+				i.putExtras(b);
+				startService(i);
+
+			}
+		}
+	}	
 }

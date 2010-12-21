@@ -98,7 +98,7 @@ public class AnimeRecord extends MALRecord implements Serializable {
 		} catch (Exception e) {
 			Log.i(LOG_NAME, "pushToDB", e);
 		}
-		Log.e(LOG_NAME, "write");
+		Log.i(LOG_NAME, "write");
 	}
 
 	private String insertStatement() {

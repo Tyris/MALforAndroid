@@ -2,7 +2,6 @@
 <menu
 xmlns:android="http://schemas.android.com/apk/res/android">
 
-
 	<item
 	android:title="@string/menuDetailReloadSyn"
 	android:icon="@android:drawable/ic_menu_rotate"
@@ -10,15 +9,19 @@ xmlns:android="http://schemas.android.com/apk/res/android">
 	
 	<item
 	android:id="@+id/setWatched"
-	android:title="@string/menuItemLastWatched"
+	android:title="@string/menuItemLastRead"
+	android:icon="@android:drawable/ic_menu_edit"/>
+	
+	<item
+	android:id="@+id/setVolumeRead"
+	android:title="@string/menuItemLastVolume"
 	android:icon="@android:drawable/ic_menu_edit"/>
 	
 	<item
 	android:id="@+id/setScore"
 	android:title="@string/menuItemScore"
 	android:icon="@android:drawable/ic_menu_edit"/>
-	
-	
+		
 	<item
 	android:title="@string/menuItemStatus"
 	android:icon="@android:drawable/ic_menu_edit">
@@ -27,8 +30,8 @@ xmlns:android="http://schemas.android.com/apk/res/android">
     		android:checkableBehavior="none">
         		
         		<item
-				android:id="@+id/itemStatusWatching"
-              	android:title="@string/Watching" />
+				android:id="@+id/itemStatusReading"
+              	android:title="@string/Reading" />
               	
               	<item
               	android:id="@+id/itemStatusCompleted"
@@ -43,8 +46,8 @@ xmlns:android="http://schemas.android.com/apk/res/android">
               	android:title="@string/Dropped" />
               	
               	<item
-              	android:id="@+id/itemStatusPlantoWatch"
-              	android:title="@string/PlantoWatch" />
+              	android:id="@+id/itemStatusPlantoRead"
+              	android:title="@string/PlantoRead" />
               	
     		</group>
 		</menu>
@@ -54,6 +57,5 @@ xmlns:android="http://schemas.android.com/apk/res/android">
 	android:title="@string/menuDetailDelete"
 	android:icon="@android:drawable/ic_menu_delete"
 	android:id="@+id/detailMenuDelete" />
-
 
 </menu>

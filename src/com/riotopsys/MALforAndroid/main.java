@@ -273,7 +273,7 @@ public class main extends Activity {
 
 	@Override
 	public void onResume() {
-		// setFilter(lastChoice);
+		setFilter(lastChoice);
 		registerReceiver(rec, intentFilter);
 		super.onPause();
 	}
