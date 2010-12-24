@@ -27,18 +27,22 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Spinner;
-import android.widget.TextView;
+import android.widget.TabHost;
+import android.widget.TabHost.TabSpec;
 import android.widget.Toast;
 
 public class main extends Activity {
 
 	private final static String LOG_NAME = "MAL Main";
 
-	private TextView title;
-	private ListView lv;
-	private Spinner spinner;
+	//private TextView title;
+	private ListView lvAnime;
+	private ListView lvManga;	
+	private Spinner spinnerAnime;
+	private Spinner spinnerManga;
 	private SQLiteDatabase db;
-	private SimpleCursorAdapter adapter;
+	private SimpleCursorAdapter adapterAnime;
+	private SimpleCursorAdapter adapterManga;
 	private String sort;
 	private int lastChoice;
 	private Reciever rec;
@@ -50,13 +54,107 @@ public class main extends Activity {
 	private MALRecord longClickRecord;
 
 
-	private boolean animeMode;
+	//private boolean animeMode;
 
 	// private MALAdapter adapter;
 
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.main);
+		TabHost tabs = (TabHost) this.findViewById(R.id.my_tabhost);
+		tabs.setup();
+		
+		TabSpec tspec1 = tabs.newTabSpec("First Tab");
+		tspec1.setIndicator("Anime");
+		tspec1.setContent(R.id.contentAnime);
+		tabs.addTab(tspec1);
+		
+		TabSpec tspec2 = tabs.newTabSpec("second Tab");
+		tspec2.setIndicator("Manga");
+		tspec2.setContent(R.id.contentManga);
+		
+		tabs.addTab(tspec2);
+		
+		PreferenceManager.setDefaultValues(this, R.xml.preferances, false);
+		SharedPreferences perfs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());		
+
+		//title = (TextView) findViewById(R.id.mainTitle);
+		lvAnime = (ListView) findViewById(R.id.lvAnime);
+		lvManga = (ListView) findViewById(R.id.lvManga);
+		
+		ipWatched = new IntegerPicker(this);
+		ipWatched.setOnDismissListener(new WatchDismissed());
+		ipVolumes = new IntegerPicker(this);
+		ipVolumes.setOnDismissListener(new VolumesDismissed());
+
+		ipScore = new IntegerPicker(this);
+		ipScore.setTitle("Set Score");
+		ipScore.setLimits(0, 10);
+		ipScore.setOnDismissListener(new ScoreDismissed());
+		
+		spinnerAnime = (Spinner) findViewById(R.id.spinnerAnime);
+		spinnerAnime.setOnItemSelectedListener(new FilterSelected());
+		spinnerManga = (Spinner) findViewById(R.id.spinnerManga);
+		spinnerManga.setOnItemSelectedListener(new FilterSelected());
+
+
+		if (savedInstanceState != null) {
+			//animeMode = savedInstanceState.getBoolean("mode", true);
+			initList();
+			sort = savedInstanceState.getString("sort");
+			spinnerAnime.setSelection(savedInstanceState.getInt("filter"));
+			lastChoice = Integer.valueOf(savedInstanceState.getInt("filter"));
+		} else {
+			//animeMode = perfs.getString("mode", getString(R.string.prefModeDefault)).equals(getString(R.string.prefModeDefault));
+			initList();
+			sort = perfs.getString("sort", getString(R.string.titleSort));
+			Log.i(LOG_NAME,perfs.getString("filter", "0"));
+			spinnerManga.setSelection(Integer.valueOf(perfs.getString("filter", "0")));
+			lastChoice = Integer.valueOf(perfs.getString("filter", "0"));
+		}
+
+
+		adapterAnime = new SimpleCursorAdapter(this, R.layout.mal_item, null, new String[] { "title", "watchedEpisodes", "episodes", "score" }, new int[] {
+				R.id.title, R.id.complete, R.id.total, R.id.score });
+		lvAnime.setAdapter(adapterAnime);
+		adapterManga = new SimpleCursorAdapter(this, R.layout.mal_item, null, new String[] { "title", "watchedEpisodes", "episodes", "score" }, new int[] {
+				R.id.title, R.id.complete, R.id.total, R.id.score });
+		lvManga.setAdapter(adapterManga);
+
+		MALSqlHelper openHelper = new MALSqlHelper(this.getBaseContext());
+		db = openHelper.getReadableDatabase();
+
+		registerForContextMenu(lvAnime);
+		registerForContextMenu(lvManga);
+
+		FilterSelected fs = new FilterSelected();
+		spinnerAnime.setOnItemSelectedListener(fs);
+		spinnerManga.setOnItemSelectedListener(fs);
+		lvAnime.setOnItemClickListener(new AnimeSelected(getBaseContext()));
+		lvManga.setOnItemClickListener(new AnimeSelected(getBaseContext()));
+
+		intentFilter = new IntentFilter(MALManager.RELOAD);
+
+		rec = new Reciever();
+
+		registerReceiver(rec, intentFilter);
+		
+		setFilter(lastChoice);
+
+		if (perfs.getString("userName", "").equals("") || perfs.getString("api", "").equals("")) {
+			Intent i = new Intent(this, Preferences.class);
+			startActivity(i);
+			if (perfs.getString("userName", "").equals("")) {
+				Toast.makeText(this, R.string.accountSetup, Toast.LENGTH_LONG).show();
+			} else {
+				Toast.makeText(this, R.string.apiSetup, Toast.LENGTH_LONG).show();
+			}
+		}
+
+	}
+	/*public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 
@@ -124,27 +222,30 @@ public class main extends Activity {
 				Toast.makeText(this, R.string.apiSetup, Toast.LENGTH_LONG).show();
 			}
 		}
-	}
+	}*/
 
 	private void initList() {
-		ArrayAdapter<CharSequence> spinnnerAdapter;
-		if (animeMode) {
-			spinnnerAdapter = ArrayAdapter.createFromResource(this, R.array.filterArray, android.R.layout.simple_spinner_item);
+		ArrayAdapter<CharSequence> spinnnerAdapterAnime;
+		ArrayAdapter<CharSequence> spinnnerAdapterManga;
+		//if (animeMode) {
+			spinnnerAdapterAnime = ArrayAdapter.createFromResource(this, R.array.filterArray, android.R.layout.simple_spinner_item);
 			// adapter = new SimpleCursorAdapter(this, R.layout.mal_item, null,
 			// new String[] { "title", "watchedEpisodes", "episodes", "score" },
 			// new int[] {R.id.title, R.id.complete, R.id.total, R.id.score });
-			ipWatched.setTitle("Episodes Watched");
-			title.setText("Anime List");
-		} else {
-			spinnnerAdapter = ArrayAdapter.createFromResource(this, R.array.filterArrayManga, android.R.layout.simple_spinner_item);
+			//ipWatched.setTitle("Episodes Watched");
+			//title.setText("Anime List");
+		//} else {
+			spinnnerAdapterManga = ArrayAdapter.createFromResource(this, R.array.filterArrayManga, android.R.layout.simple_spinner_item);
 			// adapter = new SimpleCursorAdapter(this, R.layout.mal_item, null,
 			// new String[] { "title", "watchedEpisodes", "episodes", "score" },
 			// new int[] {R.id.title, R.id.complete, R.id.total, R.id.score });
-			ipWatched.setTitle("Chapter Read");
-			title.setText("Manga List");
-		}
-		spinnnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		spinner.setAdapter(spinnnerAdapter);
+			//ipWatched.setTitle("Chapter Read");
+			//title.setText("Manga List");
+		//}
+		spinnnerAdapterAnime.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		spinnnerAdapterManga.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		spinnerAnime.setAdapter(spinnnerAdapterAnime);
+		spinnerManga.setAdapter(spinnnerAdapterAnime);
 		// lv.setAdapter(adapter);
 	}
 
@@ -153,13 +254,13 @@ public class main extends Activity {
 		super.onCreateContextMenu(menu, v, menuInfo);
 		MenuInflater inflater = getMenuInflater();
 
-		if (animeMode) {
+		/*if (animeMode) {
 			inflater.inflate(R.menu.item_menu, menu);
 			longClickRecord = MALManager.getAnime(((AdapterContextMenuInfo) menuInfo).id, this.getBaseContext());
 		} else {
 			inflater.inflate(R.menu.item_menu_manga, menu);
 			longClickRecord = MALManager.getManga(((AdapterContextMenuInfo) menuInfo).id, this.getBaseContext());
-		}
+		}*/
 
 	}
 
@@ -304,19 +405,19 @@ public class main extends Activity {
 				i = new Intent(this, Preferences.class);
 				startActivity(i);
 				break;
-			case R.id.menuSwitch:
+			/*case R.id.menuSwitch:
 				animeMode = (!animeMode);
 				initList();
 				spinner.setSelection(lastChoice);
 				setFilter(lastChoice);
-				break;
-			case R.id.menuAdd:
+				break;*/
+			/*case R.id.menuAdd:
 				i = new Intent(this, Search.class);
 				Bundle b = new Bundle();
 				b.putBoolean("mode", animeMode);
 				i.putExtras(b);				
 				startActivity(i);
-				break;
+				break;*/
 		}
 		return true;
 	}
@@ -324,27 +425,28 @@ public class main extends Activity {
 	public void onSaveInstanceState(Bundle savedInstanceState) {
 		savedInstanceState.putString("sort", sort);
 		savedInstanceState.putInt("filter", lastChoice);
-		savedInstanceState.putBoolean("mode", animeMode);
+		//savedInstanceState.putBoolean("mode", animeMode);
 
 		super.onSaveInstanceState(savedInstanceState);
 	}
 
 	private void setFilter(int choice) {
 		lastChoice = choice;
-		String query;
-		if (animeMode) {
-			query = getString(R.string.cursorSelect) + getResources().getStringArray(R.array.filterWhere)[choice] + " and dirty <> 3 " + sort;
-		} else {
-			query = getString(R.string.cursorSelectManga) + getResources().getStringArray(R.array.filterWhereManga)[choice] + " and dirty <> 3 " + sort;
-		}
+		//String query;
+		//if (animeMode) {
+		String queryAnime = getString(R.string.cursorSelect) + getResources().getStringArray(R.array.filterWhere)[choice] + " and dirty <> 3 " + sort;
+		//} else {
+		String queryManga = getString(R.string.cursorSelectManga) + getResources().getStringArray(R.array.filterWhereManga)[choice] + " and dirty <> 3 " + sort;
+		//}
 
 		try {
 			// adapter.getCursor().close();
-			Cursor c = db.rawQuery(query, null);
-			adapter.changeCursor(c);
+			Cursor cAnime = db.rawQuery(queryAnime, null);
+			adapterAnime.changeCursor(cAnime);
+			Cursor cManga = db.rawQuery(queryManga, null);
+			adapterAnime.changeCursor(cManga);
 		} catch (Exception e) {
-			Log.e("main", "Query failure", e);
-			Log.e(query, Log.getStackTraceString(e));
+			Log.e("main", "Query failure", e);			
 		}
 
 	}
@@ -375,11 +477,11 @@ public class main extends Activity {
 			// Toast.LENGTH_LONG).show();
 			Intent i = new Intent(context, AnimeDetail.class);
 			Bundle b = new Bundle();
-			if (animeMode) {
+			/*if (animeMode) {
 				b.putSerializable("media", MALManager.getAnime(id, getBaseContext()));
 			} else {
 				b.putSerializable("media", MALManager.getManga(id, getBaseContext()));
-			}
+			}*/
 			i.putExtras(b);
 			startActivity(i);
 		}
