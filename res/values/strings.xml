@@ -71,6 +71,8 @@ Please be patient this first loading can be slow."</string>
     <string name="PlantoRead">Plan to Read</string>
     
     <string name="itemLayoutComp">Completed:</string>
+    <string name="itemLayoutCompVolume">Volumes:</string>
+    <string name="itemLayoutCompChap">Chapters:</string>
     <string name="itemLayoutDivider">/</string>
     
     
@@ -125,7 +127,7 @@ CREATE TABLE if not exists `mangaList` (
     </string>
     
     <string name="cursorSelectManga">
-    	select id as `_id`, title, chaptersRead as watchedEpisodes, chapters as episodes, score from `mangaList`
+    	select id as `_id`, title, chaptersRead as watchedEpisodes, chapters as episodes, score, volumesRead, volumes from `mangaList`
     </string>
     
     <string name="dirty">

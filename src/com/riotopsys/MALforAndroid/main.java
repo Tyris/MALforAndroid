@@ -36,6 +36,7 @@ public class main extends Activity {
 	private final static String LOG_NAME = "MAL Main";
 
 	//private TextView title;
+	private TabHost tabs; 
 	private ListView lvAnime;
 	private ListView lvManga;	
 	private Spinner spinnerAnime;
@@ -63,7 +64,7 @@ public class main extends Activity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
-		TabHost tabs = (TabHost) this.findViewById(R.id.my_tabhost);
+		tabs = (TabHost) this.findViewById(R.id.my_tabhost);
 		tabs.setup();
 		
 		TabSpec tspec1 = tabs.newTabSpec("First Tab");
@@ -84,6 +85,9 @@ public class main extends Activity {
 		lvAnime = (ListView) findViewById(R.id.lvAnime);
 		lvManga = (ListView) findViewById(R.id.lvManga);
 		
+		registerForContextMenu(lvAnime);
+		registerForContextMenu(lvManga);
+		
 		ipWatched = new IntegerPicker(this);
 		ipWatched.setOnDismissListener(new WatchDismissed());
 		ipVolumes = new IntegerPicker(this);
@@ -99,16 +103,27 @@ public class main extends Activity {
 		spinnerManga = (Spinner) findViewById(R.id.spinnerManga);
 		spinnerManga.setOnItemSelectedListener(new FilterSelected());
 
+		ArrayAdapter<CharSequence> spinnnerAdapterAnime;
+		ArrayAdapter<CharSequence> spinnnerAdapterManga;
+		
+		spinnnerAdapterAnime = ArrayAdapter.createFromResource(this, R.array.filterArray, android.R.layout.simple_spinner_item);
+		spinnnerAdapterManga = ArrayAdapter.createFromResource(this, R.array.filterArrayManga, android.R.layout.simple_spinner_item);
+		
+		spinnnerAdapterAnime.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		spinnnerAdapterManga.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		
+		spinnerAnime.setAdapter(spinnnerAdapterAnime);
+		spinnerManga.setAdapter(spinnnerAdapterManga);
 
 		if (savedInstanceState != null) {
 			//animeMode = savedInstanceState.getBoolean("mode", true);
-			initList();
+			//initList();
 			sort = savedInstanceState.getString("sort");
 			spinnerAnime.setSelection(savedInstanceState.getInt("filter"));
 			lastChoice = Integer.valueOf(savedInstanceState.getInt("filter"));
 		} else {
 			//animeMode = perfs.getString("mode", getString(R.string.prefModeDefault)).equals(getString(R.string.prefModeDefault));
-			initList();
+			//initList();
 			sort = perfs.getString("sort", getString(R.string.titleSort));
 			Log.i(LOG_NAME,perfs.getString("filter", "0"));
 			spinnerManga.setSelection(Integer.valueOf(perfs.getString("filter", "0")));
@@ -119,8 +134,9 @@ public class main extends Activity {
 		adapterAnime = new SimpleCursorAdapter(this, R.layout.mal_item, null, new String[] { "title", "watchedEpisodes", "episodes", "score" }, new int[] {
 				R.id.title, R.id.complete, R.id.total, R.id.score });
 		lvAnime.setAdapter(adapterAnime);
-		adapterManga = new SimpleCursorAdapter(this, R.layout.mal_item, null, new String[] { "title", "watchedEpisodes", "episodes", "score" }, new int[] {
-				R.id.title, R.id.complete, R.id.total, R.id.score });
+		
+		adapterManga = new SimpleCursorAdapter(this, R.layout.mal_item_manga, null, new String[] { "title", "watchedEpisodes", "episodes", "score", "volumesRead", "volumes" }, new int[] {
+				R.id.title, R.id.complete, R.id.total, R.id.score, R.id.complete2, R.id.total2 });
 		lvManga.setAdapter(adapterManga);
 
 		MALSqlHelper openHelper = new MALSqlHelper(this.getBaseContext());
@@ -133,7 +149,7 @@ public class main extends Activity {
 		spinnerAnime.setOnItemSelectedListener(fs);
 		spinnerManga.setOnItemSelectedListener(fs);
 		lvAnime.setOnItemClickListener(new AnimeSelected(getBaseContext()));
-		lvManga.setOnItemClickListener(new AnimeSelected(getBaseContext()));
+		lvManga.setOnItemClickListener(new MangaSelected(getBaseContext()));
 
 		intentFilter = new IntentFilter(MALManager.RELOAD);
 
@@ -153,100 +169,6 @@ public class main extends Activity {
 			}
 		}
 
-	}
-	/*public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.main);
-
-		PreferenceManager.setDefaultValues(this, R.xml.preferances, false);
-		SharedPreferences perfs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());		
-
-		title = (TextView) findViewById(R.id.mainTitle);
-		lv = (ListView) findViewById(R.id.lv);
-		
-		ipWatched = new IntegerPicker(this);
-		ipWatched.setOnDismissListener(new WatchDismissed());
-		ipVolumes = new IntegerPicker(this);
-		ipVolumes.setOnDismissListener(new VolumesDismissed());
-
-		ipScore = new IntegerPicker(this);
-		ipScore.setTitle("Set Score");
-		ipScore.setLimits(0, 10);
-		ipScore.setOnDismissListener(new ScoreDismissed());
-		
-		spinner = (Spinner) findViewById(R.id.spinner);
-		spinner.setOnItemSelectedListener(new FilterSelected());
-
-		if (savedInstanceState != null) {
-			animeMode = savedInstanceState.getBoolean("mode", true);
-			initList();
-			sort = savedInstanceState.getString("sort");
-			spinner.setSelection(savedInstanceState.getInt("filter"));
-			lastChoice = Integer.valueOf(savedInstanceState.getInt("filter"));
-		} else {
-			animeMode = perfs.getString("mode", getString(R.string.prefModeDefault)).equals(getString(R.string.prefModeDefault));
-			initList();
-			sort = perfs.getString("sort", getString(R.string.titleSort));
-			Log.i(LOG_NAME,perfs.getString("filter", "0"));
-			spinner.setSelection(Integer.valueOf(perfs.getString("filter", "0")));
-			lastChoice = Integer.valueOf(perfs.getString("filter", "0"));
-		}
-
-
-		adapter = new SimpleCursorAdapter(this, R.layout.mal_item, null, new String[] { "title", "watchedEpisodes", "episodes", "score" }, new int[] {
-				R.id.title, R.id.complete, R.id.total, R.id.score });
-		lv.setAdapter(adapter);
-
-		MALSqlHelper openHelper = new MALSqlHelper(this.getBaseContext());
-		db = openHelper.getReadableDatabase();
-
-		registerForContextMenu(lv);
-
-		//spinner.setOnItemSelectedListener(new FilterSelected());
-		lv.setOnItemClickListener(new AnimeSelected(getBaseContext()));
-
-		intentFilter = new IntentFilter(MALManager.RELOAD);
-
-		rec = new Reciever();
-
-		registerReceiver(rec, intentFilter);
-		
-		setFilter(lastChoice);
-
-		if (perfs.getString("userName", "").equals("") || perfs.getString("api", "").equals("")) {
-			Intent i = new Intent(this, Preferences.class);
-			startActivity(i);
-			if (perfs.getString("userName", "").equals("")) {
-				Toast.makeText(this, R.string.accountSetup, Toast.LENGTH_LONG).show();
-			} else {
-				Toast.makeText(this, R.string.apiSetup, Toast.LENGTH_LONG).show();
-			}
-		}
-	}*/
-
-	private void initList() {
-		ArrayAdapter<CharSequence> spinnnerAdapterAnime;
-		ArrayAdapter<CharSequence> spinnnerAdapterManga;
-		//if (animeMode) {
-			spinnnerAdapterAnime = ArrayAdapter.createFromResource(this, R.array.filterArray, android.R.layout.simple_spinner_item);
-			// adapter = new SimpleCursorAdapter(this, R.layout.mal_item, null,
-			// new String[] { "title", "watchedEpisodes", "episodes", "score" },
-			// new int[] {R.id.title, R.id.complete, R.id.total, R.id.score });
-			//ipWatched.setTitle("Episodes Watched");
-			//title.setText("Anime List");
-		//} else {
-			spinnnerAdapterManga = ArrayAdapter.createFromResource(this, R.array.filterArrayManga, android.R.layout.simple_spinner_item);
-			// adapter = new SimpleCursorAdapter(this, R.layout.mal_item, null,
-			// new String[] { "title", "watchedEpisodes", "episodes", "score" },
-			// new int[] {R.id.title, R.id.complete, R.id.total, R.id.score });
-			//ipWatched.setTitle("Chapter Read");
-			//title.setText("Manga List");
-		//}
-		spinnnerAdapterAnime.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		spinnnerAdapterManga.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		spinnerAnime.setAdapter(spinnnerAdapterAnime);
-		spinnerManga.setAdapter(spinnnerAdapterAnime);
-		// lv.setAdapter(adapter);
 	}
 
 	@Override
@@ -254,13 +176,13 @@ public class main extends Activity {
 		super.onCreateContextMenu(menu, v, menuInfo);
 		MenuInflater inflater = getMenuInflater();
 
-		/*if (animeMode) {
+		if (tabs.getCurrentTab() == 0) {
 			inflater.inflate(R.menu.item_menu, menu);
 			longClickRecord = MALManager.getAnime(((AdapterContextMenuInfo) menuInfo).id, this.getBaseContext());
 		} else {
 			inflater.inflate(R.menu.item_menu_manga, menu);
 			longClickRecord = MALManager.getManga(((AdapterContextMenuInfo) menuInfo).id, this.getBaseContext());
-		}*/
+		}
 
 	}
 
@@ -405,19 +327,13 @@ public class main extends Activity {
 				i = new Intent(this, Preferences.class);
 				startActivity(i);
 				break;
-			/*case R.id.menuSwitch:
-				animeMode = (!animeMode);
-				initList();
-				spinner.setSelection(lastChoice);
-				setFilter(lastChoice);
-				break;*/
-			/*case R.id.menuAdd:
+			case R.id.menuAdd:
 				i = new Intent(this, Search.class);
 				Bundle b = new Bundle();
-				b.putBoolean("mode", animeMode);
+				b.putBoolean("mode", tabs.getCurrentTab() == 0);
 				i.putExtras(b);				
 				startActivity(i);
-				break;*/
+				break;
 		}
 		return true;
 	}
@@ -438,13 +354,21 @@ public class main extends Activity {
 		//} else {
 		String queryManga = getString(R.string.cursorSelectManga) + getResources().getStringArray(R.array.filterWhereManga)[choice] + " and dirty <> 3 " + sort;
 		//}
+		
+		if ( spinnerManga.getSelectedItemId() != choice ){
+			spinnerManga.setSelection(choice);
+		}
+		
+		if ( spinnerAnime.getSelectedItemId() != choice ){
+			spinnerAnime.setSelection(choice);
+		}
 
 		try {
 			// adapter.getCursor().close();
 			Cursor cAnime = db.rawQuery(queryAnime, null);
 			adapterAnime.changeCursor(cAnime);
 			Cursor cManga = db.rawQuery(queryManga, null);
-			adapterAnime.changeCursor(cManga);
+			adapterManga.changeCursor(cManga);
 		} catch (Exception e) {
 			Log.e("main", "Query failure", e);			
 		}
@@ -477,11 +401,36 @@ public class main extends Activity {
 			// Toast.LENGTH_LONG).show();
 			Intent i = new Intent(context, AnimeDetail.class);
 			Bundle b = new Bundle();
-			/*if (animeMode) {
+			//if (animeMode) {
 				b.putSerializable("media", MALManager.getAnime(id, getBaseContext()));
-			} else {
+			/*} else {
 				b.putSerializable("media", MALManager.getManga(id, getBaseContext()));
 			}*/
+			i.putExtras(b);
+			startActivity(i);
+		}
+
+	}
+	
+	private class MangaSelected implements OnItemClickListener {
+
+		private Context context;
+
+		public MangaSelected(Context context) {
+			this.context = context;
+		}
+
+		@Override
+		public void onItemClick(AdapterView<?> arg0, View arg1, int position, long id) {
+			// Toast.makeText(context, "item: "+ String.valueOf(id),
+			// Toast.LENGTH_LONG).show();
+			Intent i = new Intent(context, AnimeDetail.class);
+			Bundle b = new Bundle();
+			//if (animeMode) {
+			//	b.putSerializable("media", MALManager.getAnime(id, getBaseContext()));
+			//} else {
+				b.putSerializable("media", MALManager.getManga(id, getBaseContext()));
+			//}
 			i.putExtras(b);
 			startActivity(i);
 		}

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="fill_parent"
+android:layout_height="fill_parent"
+android:padding="10dp"
+android:textSize="16sp" >
+	
+	<TextView
+	android:id="@+id/title"
+	style="@android:style/TextAppearance.Medium"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+	android:layout_alignParentTop="true"
+	android:layout_alignParentLeft="true"/>
+	
+	<TextView
+	android:id="@+id/completetxt"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="@string/itemLayoutCompChap"
+	android:layout_below="@+id/title"
+	android:layout_alignLeft ="@+id/title"/>
+	
+	<TextView
+	android:id="@+id/complete"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:layout_below="@+id/title"
+	android:layout_toRightOf="@+id/completetxt"/>
+	
+	<TextView
+	android:id="@+id/completeSlash"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="@string/itemLayoutDivider"
+	android:layout_below="@+id/title"
+	android:layout_toRightOf="@+id/complete"/>
+	
+	<TextView
+	android:id="@+id/total"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:layout_below="@+id/title"
+	android:layout_toRightOf="@+id/completeSlash"/>
+	
+	<TextView
+	android:id="@+id/score"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:layout_below="@+id/title"
+	android:layout_alignRight="@+id/title"/>
+	
+	<TextView
+	android:id="@+id/scoretxt"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="@string/detailScorePrefix"
+	android:layout_below="@+id/title"
+	android:layout_toLeftOf="@+id/score"/>
+	
+	<TextView
+	android:id="@+id/completetxt2"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="@string/itemLayoutCompVolume"
+	android:layout_below="@+id/completetxt"
+	android:layout_alignLeft ="@+id/title"/>
+	
+	<TextView
+	android:id="@+id/complete2"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:layout_below="@+id/completetxt"
+	android:layout_toRightOf="@+id/completetxt2"/>
+	
+	<TextView
+	android:id="@+id/completeSlash2"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="@string/itemLayoutDivider"
+	android:layout_below="@+id/completetxt"
+	android:layout_toRightOf="@+id/complete2"/>
+	
+	<TextView
+	android:id="@+id/total2"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:layout_below="@+id/completetxt"
+	android:layout_toRightOf="@+id/completeSlash2"/>
+	
+</RelativeLayout>
+
+

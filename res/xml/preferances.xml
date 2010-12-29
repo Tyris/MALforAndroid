@@ -34,14 +34,14 @@
 	<PreferenceCategory
 	android:title="@string/prefPresent">
 	
-		<ListPreference 
+		<!--ListPreference 
 		android:persistent="true" 
 		android:title="@string/prefModeTitle" 
 		android:summary="@string/prefModeSummary"
 		android:key="mode"
 		android:entryValues="@array/modeArray"
 		android:entries="@array/modeArray"
-		android:defaultValue="@string/prefModeDefault"/>
+		android:defaultValue="@string/prefModeDefault"/-->
 	
 		<ListPreference 
 		android:persistent="true" 

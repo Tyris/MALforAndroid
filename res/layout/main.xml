@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TabHost
-xmlns:android="http://schemas.android.com/apk/res/android"
+<TabHost xmlns:android="http://schemas.android.com/apk/res/android"
 android:id="@+id/my_tabhost"
 android:layout_width="fill_parent"
 android:layout_height="fill_parent">
@@ -12,7 +11,7 @@ android:layout_height="fill_parent">
 	    <FrameLayout
     	android:id="@android:id/tabcontent"
     	android:layout_width="fill_parent"
-    	android:layout_height="200px"
+    	android:layout_height="fill_parent"
     	android:paddingTop="65px">
     	
     		<LinearLayout
@@ -56,69 +55,6 @@ android:layout_height="fill_parent">
 				android:scrollingCache="true" 
 				android:smoothScrollbar="true"/>
 				
-    		</LinearLayout>
-    		
-    		<!--LinearLayout
-    		android:id="@+id/content"
-    		android:orientation="vertical"
-    		android:layout_width="fill_parent"
-    		android:layout_height="fill_parent">
-    		<TextView
-	android:id="@+id/mainTitle"
-	style="@android:style/TextAppearance.Medium"
-	android:layout_width="fill_parent"
-	android:layout_height="wrap_content"
-	android:padding="2dip"	
-	android:gravity="center_vertical|center_horizontal"
-	android:text="test"/>
-    			
-    		</LinearLayout>
-    		
-    		<LinearLayout
-    		android:id="@+id/content2"
-    		android:orientation="vertical"
-    		android:layout_width="fill_parent"
-    		android:layout_height="fill_parent">
-    		<TextView
-	android:id="@+id/mainTitle"
-	style="@android:style/TextAppearance.Medium"
-	android:layout_width="fill_parent"
-	android:layout_height="wrap_content"
-	android:padding="2dip"	
-	android:gravity="center_vertical|center_horizontal"
-	android:text="test2"/>
-    			
-    		</LinearLayout-->
-    		
+    		</LinearLayout>    		    		
     	</FrameLayout>
 </TabHost>
-
-
-<!--LinearLayout
-xmlns:android="http://schemas.android.com/apk/res/android"
-android:orientation="vertical"
-android:layout_width="fill_parent"
-android:layout_height="fill_parent">
-
-	<TextView
-	android:id="@+id/mainTitle"
-	style="@android:style/TextAppearance.Medium"
-	android:layout_width="fill_parent"
-	android:layout_height="wrap_content"
-	android:padding="2dip"	
-	android:gravity="center_vertical|center_horizontal"/>
-
-    <Spinner 
-    android:id="@+id/spinner"
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
-    android:prompt="@string/filter"/>
-    
-	<ListView
-	android:id="@+id/lv"  
-    android:layout_width="fill_parent" 
-    android:layout_height="fill_parent"  
-    android:fastScrollEnabled="true" 
-	android:scrollingCache="true" 
-	android:smoothScrollbar="true"/>
-</LinearLayout-->
