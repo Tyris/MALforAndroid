@@ -260,14 +260,7 @@ public class MALManager extends IntentService {
 				Log.e(LOG_NAME, "null bundle");
 			}
 		}
-	}
-
-	/*
-	 * private void sync(SQLiteDatabase db) { pushDirty(db); //
-	 * db.execSQL(getString(R.string.dirty));// all is dirt syncAnime(db);
-	 * syncManga(db); // db.execSQL(getString(R.string.clean));// remove the
-	 * unclean ones schedule(false); }
-	 */
+	}	
 
 	// private void syncAnime(SQLiteDatabase db) {
 	private void sync(SQLiteDatabase db, boolean anime) {
@@ -384,64 +377,7 @@ public class MALManager extends IntentService {
 		}
 		// schedule();
 	}
-
-	/*
-	 * private void syncManga(SQLiteDatabase db) { if (activeConnection) {
-	 * NotificationManager mManager = (NotificationManager)
-	 * getSystemService(Context.NOTIFICATION_SERVICE); Intent intent = new
-	 * Intent(this, main.class); PendingIntent pi =
-	 * PendingIntent.getService(this, 0, intent, 0);
-	 * 
-	 * Notification notification = new Notification(R.drawable.icon,
-	 * "Synchonizing", System.currentTimeMillis());
-	 * notification.setLatestEventInfo(this, getString(R.string.app_name),
-	 * getString(R.string.pullManga), pi);
-	 * 
-	 * notification.flags |= Notification.FLAG_NO_CLEAR;
-	 * 
-	 * mManager.notify(0, notification);
-	 * 
-	 * // pushDirty(db);
-	 * 
-	 * MangaRecord mr = new MangaRecord(); try {
-	 * 
-	 * // db.execSQL(getString(R.string.dirty));// all is dirt
-	 * 
-	 * URL url = new URL("http://" + api + "/mangalist/" + user); // InputSource
-	 * in = new InputSource(new // InputStreamReader(url.openStream()));
-	 * 
-	 * BufferedReader rd = new BufferedReader(new
-	 * InputStreamReader(url.openConnection().getInputStream()), 512); String
-	 * line; StringBuffer sb = new StringBuffer(); while ((line = rd.readLine())
-	 * != null) { sb.append(line); } rd.close();
-	 * 
-	 * JSONObject raw = new JSONObject(sb.toString()); JSONArray array =
-	 * raw.getJSONArray("manga"); for (int c = 0; c < array.length(); c++) {
-	 * JSONObject jo = array.getJSONObject(c);
-	 * 
-	 * notification.setLatestEventInfo(this, "MAL for Android: " +
-	 * String.valueOf(c + 1) + "/" + String.valueOf(array.length()),
-	 * Html.fromHtml(jo.getString("title")).toString(), pi); mManager.notify(0,
-	 * notification);
-	 * 
-	 * try { mr.pullFromDB(jo.getInt("id"), db); mr.dirty = AnimeRecord.CLEAN;
-	 * mr.watchedStatus = jo.getString("read_status"); mr.score =
-	 * jo.getInt("score"); mr.chaptersRead = jo.getInt("chapters_read");
-	 * mr.volumesRead = jo.getInt("volumes_read");
-	 * 
-	 * mr.pushToDB(db); reloadSignal(); } catch (Exception e) { mr.id =
-	 * jo.getInt("id"); pull(db, mr); }
-	 * 
-	 * }
-	 * 
-	 * // db.execSQL(getString(R.string.clean));// remove the unclean // ones
-	 * 
-	 * } catch (Exception e) { errorNotification(); Log.e(LOG_NAME,
-	 * "Sync failed", e); }
-	 * 
-	 * mManager.cancelAll(); } // schedule(); }
-	 */
-
+	
 	private void add(SQLiteDatabase db, MALRecord ar) {
 		String ws = ar.watchedStatus;
 		if (activeConnection) {

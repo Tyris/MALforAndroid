@@ -91,6 +91,7 @@ public class main extends Activity {
 		ipWatched = new IntegerPicker(this);
 		ipWatched.setOnDismissListener(new WatchDismissed());
 		ipVolumes = new IntegerPicker(this);
+		ipVolumes.setTitle("Volumes Read");
 		ipVolumes.setOnDismissListener(new VolumesDismissed());
 
 		ipScore = new IntegerPicker(this);
@@ -223,9 +224,11 @@ public class main extends Activity {
 				break;
 			case R.id.setWatched:
 				if (longClickRecord instanceof AnimeRecord) {
+					ipWatched.setTitle("Episodes Watched");
 					totalEp = ((AnimeRecord) longClickRecord).episodes;
 					completed = ((AnimeRecord) longClickRecord).watchedEpisodes;
 				} else {
+					ipWatched.setTitle("Chapters Read");
 					totalEp = ((MangaRecord) longClickRecord).chapters;
 					completed = ((MangaRecord) longClickRecord).chaptersRead;
 				}

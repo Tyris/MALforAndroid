@@ -1,7 +1,5 @@
 package com.riotopsys.MALforAndroid;
 
-import java.io.Serializable;
-
 import org.json.JSONObject;
 
 import android.database.Cursor;
@@ -9,7 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.text.Html;
 import android.util.Log;
 
-public class AnimeRecord extends MALRecord implements Serializable {
+public class AnimeRecord extends MALRecord {
 
 	private final static long serialVersionUID = 2091730735738808331L;
 
