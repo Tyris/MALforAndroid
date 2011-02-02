@@ -122,6 +122,17 @@ CREATE TABLE if not exists `mangaList` (
 )
     </string>
     
+    <string name="related_table_def">
+CREATE TABLE `related` (
+  `parentId` INTEGER unsigned NOT NULL,
+  `parentType` INTEGER unsigned NOT NULL,
+  `category` char(10) NOT NULL,
+  `id` INTEGER unsigned NOT NULL,
+  `title` char(40) NOT NULL,
+  PRIMARY KEY (`parentId`,`parentType`)
+)
+    </string>
+    
 	<string name="cursorSelect">
     	select id as `_id`, title, watchedEpisodes, episodes, score from `animeList`
     </string>
