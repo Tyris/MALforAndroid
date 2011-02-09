@@ -1,5 +1,9 @@
 package com.riotopsys.MALforAndroid;
 
+import java.util.LinkedList;
+
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.database.Cursor;
@@ -13,55 +17,78 @@ public class AnimeRecord extends MALRecord {
 
 	private final static String LOG_NAME = "AnimeRecord.java";
 
-	//public long id;
-	//public String title;
-	//public String type;
-	//public String imageUrl;
 	public int episodes;
-	//public String status;
 	public int watchedEpisodes;
-	//public int score;
-	//public String watchedStatus;
-	//public String memberScore;
-	//public String rank;
-	//public String synopsis;
-	//public int dirty;
+
+	public LinkedList<MALRecord> manga_adaptation;
+	public LinkedList<MALRecord> prequels;
+	public LinkedList<MALRecord> sequels;
+	public LinkedList<MALRecord> side_stories;
 
 	public AnimeRecord() {
 		dirty = UNSYNCED;
 	}
 
-	public AnimeRecord(long id2, SQLiteDatabase db) throws Exception{
+	public AnimeRecord(long id2, SQLiteDatabase db) throws Exception {
 		pullFromDB(id2, db);
 	}
 
 	public AnimeRecord(JSONObject raw) {
 		super(raw);
-		try {			
+		try {
 			id = raw.getInt("id");
-			
-			if ( raw.isNull("episodes") ){
+
+			if (raw.isNull("episodes")) {
 				episodes = 0;
 			} else {
 				episodes = raw.getInt("episodes");
 			}
-			
-			if ( raw.isNull("watched_episodes") ){
+
+			if (raw.isNull("watched_episodes")) {
 				watchedEpisodes = 0;
 			} else {
 				watchedEpisodes = raw.getInt("watched_episodes");
 			}
-			
+
 			watchedStatus = Html.fromHtml(raw.getString("watched_status")).toString();
-			
+
+			manga_adaptation = loadRelated("manga_adaptation", raw);
+			prequels = loadRelated("prequels", raw);
+			sequels = loadRelated("sequels", raw);
+			side_stories = loadRelated("side_stories", raw);
+
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "JSON failed", e);
 		}
 	}
 
+	private LinkedList<MALRecord> loadRelated(String type, JSONObject raw) {
+		LinkedList<MALRecord> result = new LinkedList<MALRecord>();
+		MALRecord temp;
+		try {
+			JSONArray related = raw.getJSONArray(type);
+
+			for (int c = 0; c < related.length(); c++) {
+				JSONObject item = related.getJSONObject(c);
+				if (item.has("anime_id")) {
+					temp = new AnimeRecord();
+					temp.id = item.getLong("anime_id");
+				} else {
+					temp = new MangaRecord();
+					temp.id = item.getLong("manga_id");
+				}
+				temp.title = item.getString("title");
+				result.add(temp);
+			}
+		} catch (JSONException e) {
+			// not found no biggie.
+		}
+		return result;
+	}
+
 	// loads fields from table
 	public void pullFromDB(long id, SQLiteDatabase db) throws Exception {
-		
+
 		Cursor c = db.rawQuery("select * from animeList where id = " + String.valueOf(id), null);
 		if (c.moveToFirst()) {
 			// c.getInt(c.getColumnIndex("watchedEpisodes"))
@@ -75,18 +102,18 @@ public class AnimeRecord extends MALRecord {
 			imageUrl = c.getString(c.getColumnIndex("imageUrl"));
 			status = c.getString(c.getColumnIndex("status"));
 			watchedStatus = c.getString(c.getColumnIndex("watchedStatus"));
-			
-			if ( !c.isNull(c.getColumnIndex("memberScore")) ){
+
+			if (!c.isNull(c.getColumnIndex("memberScore"))) {
 				memberScore = c.getString(c.getColumnIndex("memberScore"));
 				rank = c.getString(c.getColumnIndex("rank"));
 				synopsis = c.getString(c.getColumnIndex("synopsis"));
-			} 
+			}
 
 			dirty = c.getInt(c.getColumnIndex("dirty"));
 			c.close();
 		} else {
 			c.close();
-			throw new Exception( "item not found" );
+			throw new Exception("item not found");
 		}
 	}
 
@@ -100,31 +127,21 @@ public class AnimeRecord extends MALRecord {
 	}
 
 	private String insertStatement() {
-		return "replace into `animeList` values (" + 
-			String.valueOf(id) + ", " + 
-			addQuotes(title) + ", " + 
-			addQuotes(type) + ", " + 
-			addQuotes(imageUrl) + ", " + 
-			String.valueOf(episodes) + ", " + 
-			addQuotes(status) + ", " + 
-			String.valueOf(watchedEpisodes) + ", " + 
-			String.valueOf(score) + ", " + 
-			addQuotes(watchedStatus) + ", " + 
-			String.valueOf(dirty) + ", " + 
-			addQuotes(memberScore) + ", " + 
-			addQuotes(rank) + ", " +
-			addQuotes(synopsis) + " )";
+		return "replace into `animeList` values (" + String.valueOf(id) + ", " + addQuotes(title) + ", " + addQuotes(type) + ", " + addQuotes(imageUrl) + ", "
+				+ String.valueOf(episodes) + ", " + addQuotes(status) + ", " + String.valueOf(watchedEpisodes) + ", " + String.valueOf(score) + ", "
+				+ addQuotes(watchedStatus) + ", " + String.valueOf(dirty) + ", " + addQuotes(memberScore) + ", " + addQuotes(rank) + ", " + addQuotes(synopsis)
+				+ " )";
 	}
-	
+
 	@Override
-	public boolean equals( Object o ){
-		boolean result = super.equals(o); 
+	public boolean equals(Object o) {
+		boolean result = super.equals(o);
 		result &= (o instanceof AnimeRecord);
-		if ( result ){
-			result &= ( episodes == ((AnimeRecord)o).episodes) ;
-			result &= ( watchedEpisodes == ((AnimeRecord)o).watchedEpisodes);			
-		}		
+		if (result) {
+			result &= (episodes == ((AnimeRecord) o).episodes);
+			result &= (watchedEpisodes == ((AnimeRecord) o).watchedEpisodes);
+		}
 		return result;
 	}
-	
+
 }

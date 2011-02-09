@@ -33,7 +33,7 @@ public abstract class MALRecord implements Serializable{
 	public String rank;
 	public String synopsis;
 	public String type;
-	
+
 	public MALRecord(JSONObject raw) {
 		try {			
 			id = raw.getInt("id");
