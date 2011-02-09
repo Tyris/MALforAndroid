@@ -1,5 +1,7 @@
 package com.riotopsys.MALforAndroid;
 
+import java.util.LinkedList;
+
 import org.json.JSONObject;
 
 import android.database.Cursor;
@@ -13,25 +15,15 @@ public class MangaRecord extends MALRecord  {
 
 	private final static String LOG_NAME = "MangaRecord";
 
-	//public String title;
-	//public String type;
-	//public String imageUrl;
-	
 	public int chapters;
 	public int volumes;
 	
-	//public String status;
-
 	public int chaptersRead;
 	public int volumesRead; 
 	
-	//public int score;
-	//public String watchedStatus;
-	//public String memberScore;
-	//public String rank;
-	//public String synopsis;
-	//public int dirty;
-
+	public LinkedList<MALRecord> anime_adaptations;
+	public LinkedList<MALRecord> related_manga;
+	
 	public MangaRecord() {
 		dirty = UNSYNCED;
 	}
@@ -70,6 +62,8 @@ public class MangaRecord extends MALRecord  {
 			
 			watchedStatus = Html.fromHtml(raw.getString("read_status")).toString();
 			
+			anime_adaptations = loadRelated("anime_adaptations", raw);
+			related_manga = loadRelated("related_manga", raw);
 			
 		} catch (Exception e) {
 			Log.e(LOG_NAME, "JSON failed", e);
@@ -87,8 +81,7 @@ public class MangaRecord extends MALRecord  {
 			
 			chapters = c.getInt(c.getColumnIndex("chapters"));
 			volumes = c.getInt(c.getColumnIndex("volumes"));
-			
-			
+						
 			chaptersRead = c.getInt(c.getColumnIndex("chaptersRead"));
 			volumesRead = c.getInt(c.getColumnIndex("volumesRead"));
 			
@@ -106,6 +99,9 @@ public class MangaRecord extends MALRecord  {
 				synopsis = c.getString(c.getColumnIndex("synopsis"));
 			} 
 			
+			anime_adaptations = loadRelated("anime_adaptations", db);
+			related_manga = loadRelated("related_manga", db);
+			
 			dirty = c.getInt(c.getColumnIndex("dirty"));
 			c.close();
 		} else {
@@ -118,6 +114,10 @@ public class MangaRecord extends MALRecord  {
 	public void pushToDB(SQLiteDatabase db) {
 		try {
 			db.execSQL(insertStatement());
+			
+			 saveRelated("anime_adaptations", db, anime_adaptations);
+			 saveRelated("related_manga", db, related_manga);
+			
 		} catch (Exception e) {
 			Log.i(LOG_NAME, "pushToDB", e);			
 		}

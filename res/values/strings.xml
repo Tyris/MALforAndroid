@@ -129,7 +129,7 @@ CREATE TABLE `related` (
   `category` char(10) NOT NULL,
   `id` INTEGER unsigned NOT NULL,
   `title` char(40) NOT NULL,
-  PRIMARY KEY (`parentId`,`parentType`)
+  PRIMARY KEY (`parentId`,`parentType`, `category`, `id`)
 )
     </string>
     

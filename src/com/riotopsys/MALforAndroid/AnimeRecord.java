@@ -2,8 +2,6 @@ package com.riotopsys.MALforAndroid;
 
 import java.util.LinkedList;
 
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.database.Cursor;
@@ -62,30 +60,6 @@ public class AnimeRecord extends MALRecord {
 		}
 	}
 
-	private LinkedList<MALRecord> loadRelated(String type, JSONObject raw) {
-		LinkedList<MALRecord> result = new LinkedList<MALRecord>();
-		MALRecord temp;
-		try {
-			JSONArray related = raw.getJSONArray(type);
-
-			for (int c = 0; c < related.length(); c++) {
-				JSONObject item = related.getJSONObject(c);
-				if (item.has("anime_id")) {
-					temp = new AnimeRecord();
-					temp.id = item.getLong("anime_id");
-				} else {
-					temp = new MangaRecord();
-					temp.id = item.getLong("manga_id");
-				}
-				temp.title = item.getString("title");
-				result.add(temp);
-			}
-		} catch (JSONException e) {
-			// not found no biggie.
-		}
-		return result;
-	}
-
 	// loads fields from table
 	public void pullFromDB(long id, SQLiteDatabase db) throws Exception {
 
@@ -110,6 +84,12 @@ public class AnimeRecord extends MALRecord {
 			}
 
 			dirty = c.getInt(c.getColumnIndex("dirty"));
+
+			manga_adaptation = loadRelated("manga_adaptation", db);
+			prequels = loadRelated("prequels", db);
+			sequels = loadRelated("sequels", db);
+			side_stories = loadRelated("side_stories", db);
+
 			c.close();
 		} else {
 			c.close();
@@ -120,6 +100,12 @@ public class AnimeRecord extends MALRecord {
 	public void pushToDB(SQLiteDatabase db) {
 		try {
 			db.execSQL(insertStatement());
+
+			saveRelated("manga_adaptation", db, manga_adaptation);
+			saveRelated("prequels", db, prequels);
+			saveRelated("sequels", db, sequels);
+			saveRelated("side_stories", db, side_stories);
+
 		} catch (Exception e) {
 			Log.i(LOG_NAME, "pushToDB", e);
 		}
